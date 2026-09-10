@@ -34,6 +34,7 @@ const googleTTS = require('google-tts-api');
 const db = require('./db');
 const { renderTaiXiuResultImage, renderSoiCauChart, generateTaiXiuAnimationGif } = require('./dice_renderer');
 const { renderLeaderboardImage } = require('./leaderboard_renderer');
+const { handleWordChainMessage, getWordChainState } = require('./word_chain');
 
 // GuildMembers cần bật Privileged Intent trên Discord Developer Portal:
 // https://discord.com/developers/applications/1547186053696327811/bot
@@ -2684,6 +2685,11 @@ client.on('messageCreate', async (message) => {
     const { member, channel, guild, content } = message;
     if (!member) return;
 
+    // Xử lý game Nối Từ nếu người dùng chat trong phòng ❖-nối-từ
+    if (channel.id === '1489607647840698518') {
+        return handleWordChainMessage(message, db);
+    }
+
     // A. Tích lũy tin nhắn và XP (Hệ thống Level)
     const { user, leveledUp } = db.addMessageXP(message.author.id);
     if (leveledUp) {
@@ -3045,15 +3051,33 @@ client.on('messageCreate', async (message) => {
             return message.reply({ embeds: [embed] });
         }
 
-        // 15. Lệnh .help / .lenh / .menu
+        // 15. Lệnh .noitu (Xem thông tin game nối từ)
+        if (cmd === 'noitu') {
+            const state = getWordChainState(db);
+            const embed = new EmbedBuilder()
+                .setTitle('📖 TRÒ CHƠI NỐI TỪ TIẾNG VIỆT')
+                .setColor(0x3498DB)
+                .setDescription(
+                    `> Sảnh game Nối Từ đang diễn ra sôi nổi tại kênh: <#1489607647840698518>!\n\n` +
+                    `• Từ hiện tại: **${state.currentWord}**\n` +
+                    `• Chữ nối tiếp theo: **${state.lastWord.toUpperCase()}**\n` +
+                    `• Chuỗi kỷ lục: **${state.highStreak || 0}** từ 🔥\n` +
+                    `• Phần thưởng: **+100 xu** & **+15 XP** mỗi từ đúng, **+500 xu** nếu chiếu tướng!\n\n` +
+                    `👉 Bấm ngay vào <#1489607647840698518> để tham gia nối từ nhé!`
+                );
+            return message.reply({ embeds: [embed] });
+        }
+
+        // 16. Lệnh .help / .lenh / .menu
         if (cmd === 'help' || cmd === 'lenh' || cmd === 'menu') {
             const embed = new EmbedBuilder()
                 .setTitle('📜 BẢNG LỆNH CÚ PHÁP DẤU CHẤM (.)')
                 .setColor(0x2ECC71)
                 .setDescription(
-                    `▎ **MINIGAMES BÀN CƯỢC**\n` +
+                    `▎ **MINIGAMES BÀN CƯỢC & NỐI TỪ**\n` +
                     `• \`.tx\`: Mở bàn cược Tài Xỉu cộng đồng 35s\n` +
                     `• \`.bc\`: Mở bàn cược Bầu Cua Tôm Cá 45s\n` +
+                    `• \`.noitu\`: Vào phòng game Nối Từ Tiếng Việt tại <#1489607647840698518>\n` +
                     `• \`.sc\` (hoặc \`.soicau\`, \`.thongke\`): Xem biểu đồ 2 tầng Thống Kê Phiên\n` +
                     `• \`.ls\` (hoặc \`.lichsu\`): Xem danh sách kết quả 10 phiên gần nhất\n\n` +
                     `▎ **KINH TẾ & VÍ TIỀN**\n` +
@@ -3066,7 +3090,7 @@ client.on('messageCreate', async (message) => {
                     `• \`.join\` / \`.leave\`: Mời / cho bot rời phòng voice\n` +
                     `• \`.clear [số lượng]\`: Xóa nhanh tin nhắn (Mod/Admin)`
                 )
-                .setFooter({ text: 'Gõ .tx, .bc, .sc cực kỳ nhanh gọn!' });
+                .setFooter({ text: 'Gõ .tx, .bc, .sc, .noitu cực kỳ nhanh gọn!' });
 
             return message.reply({ embeds: [embed] });
         }
