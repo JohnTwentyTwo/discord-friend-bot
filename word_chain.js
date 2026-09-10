@@ -194,14 +194,14 @@ async function handleWordChainMessage(message, db) {
 
     // 7. KIỂM TRA TỪ ĐẦU TIÊN CÓ TRÙNG VỚI TỪ CUỐI CỦA NGƯỜI TRƯỚC KHÔNG
     if (w1 !== state.lastWord.toLowerCase()) {
-        await message.react('❌').catch(() => null);
-        return message.reply(`> ❌ **Sai chữ nối rồi!** Người trước kết thúc bằng chữ "**${state.lastWord}**", bạn phải nối từ bắt đầu bằng "**${state.lastWord}**" mới đúng.`);
+        await message.react('1547511614323036230').catch(() => message.react('❌').catch(() => null));
+        return message.reply(`> <a:mxt_cross_red:1547511614323036230> **Sai chữ nối rồi!** Người trước kết thúc bằng chữ "**${state.lastWord}**", bạn phải nối từ bắt đầu bằng "**${state.lastWord}**" mới đúng.`);
     }
 
     // 8. KIỂM TRA TỪ CÓ TRONG TỪ ĐIỂN KHÔNG
     if (!isValidWord(w1, w2)) {
-        await message.react('❓').catch(() => null);
-        return message.reply(`> ❓ Từ "**${phrase}**" không có trong từ điển tiếng Việt hoặc không phải từ ghép hợp lệ! Vui lòng chọn từ khác.`);
+        await message.react('1547511614323036230').catch(() => message.react('❓').catch(() => null));
+        return message.reply(`> <a:mxt_cross_red:1547511614323036230> Từ "**${phrase}**" không có trong từ điển tiếng Việt hoặc không phải từ ghép hợp lệ! Vui lòng chọn từ khác.`);
     }
 
     // 9. KIỂM TRA TỪ ĐÃ DÙNG TRONG 50 LƯỢT GẦN ĐÂY CHƯA
@@ -210,15 +210,15 @@ async function handleWordChainMessage(message, db) {
         const turnsAgo = state.usedWords.length - 1 - recentIndex;
         if (turnsAgo < 50) {
             const waitTurns = 50 - turnsAgo;
-            await message.react('🔁').catch(() => null);
-            return message.reply(`> ⚠️ Từ "**${phrase}**" đã được sử dụng trong 50 lượt gần đây! Có thể dùng lại sau **${waitTurns}** lượt nữa.`);
+            await message.react('1547511614323036230').catch(() => message.react('🔁').catch(() => null));
+            return message.reply(`> <a:mxt_cross_red:1547511614323036230> Từ "**${phrase}**" đã được sử dụng trong 50 lượt gần đây! Có thể dùng lại sau **${waitTurns}** lượt nữa.`);
         }
     }
 
     // ==========================================
     // 10. NỐI TỪ HỢP LỆ THÀNH CÔNG!
     // ==========================================
-    await message.react('✅').catch(() => null);
+    await message.react('1547511610594173009').catch(() => message.react('✅').catch(() => null));
 
     state.currentWord = phrase;
     state.lastWord = w2;
