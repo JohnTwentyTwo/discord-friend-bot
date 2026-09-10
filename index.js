@@ -1623,30 +1623,12 @@ client.on('interactionCreate', async (interaction) => {
                 });
                 const attachment = new AttachmentBuilder(imageBuffer, { name: 'bxh-daigia.png' });
 
-                const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
-                const list = enrichedUsers.map((u, i) => {
-                    let recentStr = '`― Chưa cược`';
-                    if (u.recentGame && u.recentGame.net !== 0) {
-                        const isWin = u.recentGame.net > 0;
-                        const icon = isWin ? '🟢' : '🔴';
-                        const label = isWin ? 'Ăn' : 'Thua';
-                        const sign = isWin ? '+' : '';
-                        recentStr = `${icon} **${label} ${sign}${formatShortNumber(u.recentGame.net)} xu** (${u.recentGame.game || 'Game'})`;
-                    }
-                    return `${medals[i]} <@${u.id}> — **${formatNumber(u.coins)}** xu (Lv.${u.level}) • ${recentStr}`;
-                }).join('\n') || '*Chưa có dữ liệu thành viên.*';
-
-                const embed = new EmbedBuilder()
-                    .setTitle('🏆 BẢNG XẾP HẠNG TOP 10 ĐẠI GIA SERVER')
-                    .setDescription(
-                        `> **Top 10 thành viên sở hữu số dư ví nhiều nhất & biến động thắng thua gần đây:**\n\n` + list
-                    )
-                    .setColor(0xF1C40F)
-                    .setImage('attachment://bxh-daigia.png')
-                    .setFooter({ text: 'Quản Lý Lê • Dữ liệu cập nhật tự động sau mỗi ván cược | Dùng .xephang' })
-                    .setTimestamp();
-
-                return interaction.editReply({ embeds: [embed], files: [attachment] });
+                if (imageBuffer) {
+                    const attachment = new AttachmentBuilder(imageBuffer, { name: 'bxh-daigia.png' });
+                    return interaction.editReply({ files: [attachment] });
+                } else {
+                    return interaction.editReply('❌ Lỗi khi xuất hình ảnh Bảng xếp hạng!');
+                }
             }
 
             // ==========================================
@@ -2910,37 +2892,11 @@ client.on('messageCreate', async (message) => {
                 console.error('[XEPHANG] Lỗi render ảnh:', err);
             }
 
-            const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
-            const list = enrichedUsers.map((u, i) => {
-                let recentStr = '`― Chưa cược`';
-                if (u.recentGame && u.recentGame.net !== 0) {
-                    const isWin = u.recentGame.net > 0;
-                    const icon = isWin ? '🟢' : '🔴';
-                    const label = isWin ? 'Ăn' : 'Thua';
-                    const sign = isWin ? '+' : '';
-                    recentStr = `${icon} **${label} ${sign}${formatShortNumber(u.recentGame.net)} xu** (${u.recentGame.game || 'Game'})`;
-                }
-                return `${medals[i]} <@${u.id}> — **${formatNumber(u.coins)}** xu (Lv.${u.level}) • ${recentStr}`;
-            }).join('\n') || '*Chưa có dữ liệu.*';
-
-            const embed = new EmbedBuilder()
-                .setTitle('🏆 BẢNG XẾP HẠNG TOP 10 ĐẠI GIA SERVER')
-                .setColor(0xF1C40F)
-                .setDescription(
-                    `> **Top 10 thành viên sở hữu số dư ví nhiều nhất & biến động thắng thua gần đây:**\n\n` + list
-                )
-                .setFooter({
-                    text: 'Quản Lý Lê • Cập nhật tự động sau mỗi ván cược | Dùng .xephang hoặc /xephang',
-                    iconURL: client.user.displayAvatarURL()
-                })
-                .setTimestamp();
-
             if (imageBuffer) {
                 const attachment = new AttachmentBuilder(imageBuffer, { name: 'bxh-daigia.png' });
-                embed.setImage('attachment://bxh-daigia.png');
-                return message.reply({ embeds: [embed], files: [attachment] });
+                return message.reply({ files: [attachment] });
             } else {
-                return message.reply({ embeds: [embed] });
+                return message.reply('❌ Lỗi khi xuất hình ảnh Bảng xếp hạng!');
             }
         }
 
