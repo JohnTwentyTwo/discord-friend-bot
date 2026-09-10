@@ -1550,6 +1550,68 @@ client.on('interactionCreate', async (interaction) => {
         if (interaction.isButton()) {
             const { customId, user, guild, channel, message } = interaction;
 
+            // Nút điều khiển phòng voice tạm thời
+            if (customId.startsWith('voice_lock_') || customId.startsWith('voice_limit_') || customId.startsWith('voice_rename_')) {
+                const targetChannelId = customId.split('_')[2];
+                const voiceChan = guild.channels.cache.get(targetChannelId) || await guild.channels.fetch(targetChannelId).catch(() => null);
+                if (!voiceChan) {
+                    return interaction.reply({ content: '✕ Phòng voice này không còn tồn tại!', ephemeral: true });
+                }
+
+                // Kiểm tra quyền: Chỉ chủ phòng hoặc Admin mới được chỉnh
+                const ownerId = tempVoiceChannels.get(targetChannelId);
+                const isOwner = ownerId === user.id;
+                const isAdmin = interaction.member.permissions.has(PermissionsBitField.Flags.Administrator);
+                if (!isOwner && !isAdmin) {
+                    return interaction.reply({ content: '✕ Chỉ chủ sở hữu phòng thoại mới có quyền điều khiển phòng này!', ephemeral: true });
+                }
+
+                // 1. Khóa / Mở phòng
+                if (customId.startsWith('voice_lock_')) {
+                    const currentPerm = voiceChan.permissionOverwrites.cache.get(guild.id);
+                    const isCurrentlyLocked = currentPerm && currentPerm.deny.has(PermissionsBitField.Flags.Connect);
+
+                    if (isCurrentlyLocked) {
+                        await voiceChan.permissionOverwrites.edit(guild.id, { Connect: null });
+                        return interaction.reply({ content: '🔓 **Đã mở khóa phòng!** Tất cả thành viên đều có thể tham gia.', ephemeral: true });
+                    } else {
+                        await voiceChan.permissionOverwrites.edit(guild.id, { Connect: false });
+                        return interaction.reply({ content: '🔒 **Đã khóa phòng!** Người ngoài sẽ không thể tự do vào phòng được nữa.', ephemeral: true });
+                    }
+                }
+
+                // 2. Giới hạn số người trong phòng (xoay vòng: 0 -> 2 -> 4 -> 6 -> 8 -> 10 -> 0)
+                if (customId.startsWith('voice_limit_')) {
+                    const currentLimit = voiceChan.userLimit || 0;
+                    const limits = [0, 2, 4, 6, 8, 10];
+                    const currentIndex = limits.indexOf(currentLimit);
+                    const nextLimit = limits[(currentIndex + 1) % limits.length];
+
+                    await voiceChan.setUserLimit(nextLimit);
+                    const limitText = nextLimit === 0 ? 'Không giới hạn' : `${nextLimit} người`;
+                    return interaction.reply({ content: `👥 **Đã cập nhật giới hạn phòng:** **${limitText}**!`, ephemeral: true });
+                }
+
+                // 3. Đổi tên phòng (hiện Modal)
+                if (customId.startsWith('voice_rename_')) {
+                    const modal = new ModalBuilder()
+                        .setCustomId(`modal_voice_rename_${targetChannelId}`)
+                        .setTitle('Đổi Tên Phòng Thoại');
+
+                    const nameInput = new TextInputBuilder()
+                        .setCustomId('input_new_voice_name')
+                        .setLabel('Nhập tên phòng mới:')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ví dụ: 🔊・Chơi Game Cùng Bạn...')
+                        .setValue(voiceChan.name)
+                        .setMaxLength(30)
+                        .setRequired(true);
+
+                    modal.addComponents(new ActionRowBuilder().addComponents(nameInput));
+                    return interaction.showModal(modal);
+                }
+            }
+
             // Nút tham gia Giveaway
             if (customId === 'btn_join_giveaway') {
                 const g = db.getGiveaway(message.id);
@@ -1840,7 +1902,20 @@ client.on('interactionCreate', async (interaction) => {
 
         // --- XỬ LÝ FORM NHẬP TIỀN CƯỢC (MODAL SUBMIT) ---
         if (interaction.isModalSubmit()) {
-            const { customId, user, channel } = interaction;
+            const { customId, user, channel, guild } = interaction;
+
+            // Modal đổi tên phòng voice
+            if (customId.startsWith('modal_voice_rename_')) {
+                const targetChannelId = customId.replace('modal_voice_rename_', '');
+                const voiceChan = guild.channels.cache.get(targetChannelId) || await guild.channels.fetch(targetChannelId).catch(() => null);
+                if (!voiceChan) {
+                    return interaction.reply({ content: '✕ Phòng voice này không còn tồn tại!', ephemeral: true });
+                }
+
+                const newName = interaction.fields.getTextInputValue('input_new_voice_name');
+                await voiceChan.setName(newName).catch(() => null);
+                return interaction.reply({ content: `✏️ **Đã đổi tên phòng thành:** **${newName}**`, ephemeral: true });
+            }
 
             // Modal Ticket: ticket_modal_ticket_support | ticket_modal_ticket_report | ticket_modal_ticket_feedback
             if (customId.startsWith('ticket_modal_')) {
@@ -2121,20 +2196,35 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
     }
 
     // C. Người dùng tham gia vào phòng "Tạo phòng nhanh"
-    if (newState.channelId && newState.channel.name.includes('Tạo phòng nhanh')) {
+    const newChan = newState.channel || (newState.channelId ? await guild.channels.fetch(newState.channelId).catch(() => null) : null);
+    const oldChan = oldState.channel || (oldState.channelId ? await (oldState.guild || guild).channels.fetch(oldState.channelId).catch(() => null) : null);
+
+    if (newChan && (newChan.name.includes('Tạo phòng nhanh') || newChan.name.includes('Tạo phòng') || newChan.id === '1547480185237016639')) {
         try {
             const tempChannel = await guild.channels.create({
                 name: `🔊・Phòng của ${member.displayName}`,
                 type: ChannelType.GuildVoice,
-                parent: newState.channel.parentId,
+                parent: newChan.parentId,
                 permissionOverwrites: [
                     {
-                        id: member.id,
+                        id: guild.id, // @everyone
                         allow: [
-                            PermissionsBitField.Flags.ManageChannels,
-                            PermissionsBitField.Flags.MoveMembers,
+                            PermissionsBitField.Flags.ViewChannel,
                             PermissionsBitField.Flags.Connect,
                             PermissionsBitField.Flags.Speak
+                        ]
+                    },
+                    {
+                        id: member.id, // Chủ phòng có toàn quyền
+                        allow: [
+                            PermissionsBitField.Flags.ViewChannel,
+                            PermissionsBitField.Flags.Connect,
+                            PermissionsBitField.Flags.Speak,
+                            PermissionsBitField.Flags.ManageChannels,
+                            PermissionsBitField.Flags.MoveMembers,
+                            PermissionsBitField.Flags.MuteMembers,
+                            PermissionsBitField.Flags.DeafenMembers,
+                            PermissionsBitField.Flags.PrioritySpeaker
                         ]
                     }
                 ]
@@ -2142,22 +2232,49 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
 
             await member.voice.setChannel(tempChannel);
             tempVoiceChannels.set(tempChannel.id, member.id);
-            console.log(`[TEMP-VOICE] Đã tạo phòng cho ${member.displayName}`);
+            console.log(`[TEMP-VOICE] ✅ Đã tạo phòng riêng cho ${member.displayName} (${tempChannel.id})`);
+
+            // Gửi bảng điều khiển phòng thoại vào box chat của phòng voice
+            const controlEmbed = new EmbedBuilder()
+                .setColor(0x00FF7F)
+                .setAuthor({ name: 'Quản Lý Lê — Quản Lý Phòng Thoại', iconURL: guild.iconURL({ dynamic: true }) })
+                .setTitle(`🎙️ Bảng điều khiển: ${tempChannel.name}`)
+                .setDescription(
+                    `Xin chào <@${member.id}>! Bạn là chủ sở hữu của phòng voice này.\n\n` +
+                    `• 🔒 **Khóa / Mở phòng:** Bật/tắt quyền tham gia của mọi người.\n` +
+                    `• 👥 **Giới hạn người:** Giới hạn số thành viên (2, 4, 6, 8, Không giới hạn).\n` +
+                    `• ✏️ **Đổi tên:** Đổi tên phòng theo sở thích của bạn.\n\n` +
+                    `*💡 Phòng sẽ tự động được dọn dẹp sạch sẽ khi tất cả mọi người rời đi.*`
+                )
+                .setFooter({ text: 'Hệ thống Voice Tự Động • Quản Lý Lê' })
+                .setTimestamp();
+
+            const controlRow = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId(`voice_lock_${tempChannel.id}`).setLabel('Khóa/Mở').setEmoji('🔒').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId(`voice_limit_${tempChannel.id}`).setLabel('Giới Hạn').setEmoji('👥').setStyle(ButtonStyle.Primary),
+                new ButtonBuilder().setCustomId(`voice_rename_${tempChannel.id}`).setLabel('Đổi Tên').setEmoji('✏️').setStyle(ButtonStyle.Success)
+            );
+
+            await tempChannel.send({ content: `<@${member.id}>`, embeds: [controlEmbed], components: [controlRow] }).catch(() => null);
         } catch (err) {
-            console.error('[TEMP-VOICE] Lỗi khi tạo phòng:', err);
+            console.error('[TEMP-VOICE] Lỗi khi tạo phòng:', err.message);
         }
     }
 
     // D. Người dùng rời khỏi phòng voice tạm thời -> Nếu phòng trống thì xóa
-    if (oldState.channelId && tempVoiceChannels.has(oldState.channelId)) {
-        const tempChan = oldState.channel;
-        if (tempChan && tempChan.members.size === 0) {
-            tempVoiceChannels.delete(oldState.channelId);
-            try {
-                await tempChan.delete();
-                console.log(`[TEMP-VOICE] Đã xóa phòng trống: ${tempChan.name}`);
-            } catch (err) {
-                console.error('[TEMP-VOICE] Lỗi khi xóa phòng:', err);
+    if (oldState.channelId) {
+        const isTracked = tempVoiceChannels.has(oldState.channelId);
+        const chanToCheck = oldChan;
+        // Kiểm tra nếu là phòng theo dõi hoặc phòng có tiền tố "🔊・Phòng của" mà trống người
+        if (chanToCheck && (isTracked || (chanToCheck.name && chanToCheck.name.startsWith('🔊・Phòng của')))) {
+            if (chanToCheck.members.size === 0) {
+                tempVoiceChannels.delete(oldState.channelId);
+                try {
+                    await chanToCheck.delete('Phòng tạm đã trống, tự động dọn dẹp.');
+                    console.log(`[TEMP-VOICE] 🗑️ Đã xóa phòng trống: ${chanToCheck.name}`);
+                } catch (err) {
+                    console.error('[TEMP-VOICE] Lỗi khi xóa phòng:', err.message);
+                }
             }
         }
     }
