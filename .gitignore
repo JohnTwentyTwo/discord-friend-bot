@@ -1,0 +1,8 @@
+node_modules/
+.env
+vps_credentials.txt
+test_*.js
+create_github_repo.js
+deploy_render.js
+*.png
+*.gif

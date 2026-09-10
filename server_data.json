@@ -1,0 +1,380 @@
+{
+  "users": {
+    "548114386787762178": {
+      "coins": 5852786332,
+      "lastDaily": 0,
+      "xp": 381,
+      "level": 2,
+      "messages": 19,
+      "voiceTime": 99
+    },
+    "874583735054528532": {
+      "coins": 9999998000,
+      "lastDaily": 0,
+      "xp": 1022,
+      "level": 6,
+      "messages": 53,
+      "voiceTime": 11
+    },
+    "1547186053696327811": {
+      "coins": 50000,
+      "lastDaily": 0,
+      "xp": 0,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 0
+    },
+    "920598271389495347": {
+      "coins": 900,
+      "lastDaily": 0,
+      "xp": 0,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 0
+    },
+    "642229607101104129": {
+      "coins": 9003725400,
+      "lastDaily": 0,
+      "xp": 198,
+      "level": 1,
+      "messages": 10,
+      "voiceTime": 0
+    },
+    "830708268292243486": {
+      "coins": 0,
+      "lastDaily": 0,
+      "xp": 20,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 243
+    },
+    "614771187523911715": {
+      "coins": 0,
+      "lastDaily": 0,
+      "xp": 0,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 8
+    },
+    "1134820683558441021": {
+      "coins": 0,
+      "lastDaily": 0,
+      "xp": 0,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 20
+    },
+    "731502168598904882": {
+      "coins": 0,
+      "lastDaily": 0,
+      "xp": 97,
+      "level": 1,
+      "messages": 5,
+      "voiceTime": 0
+    },
+    "992051971412463636": {
+      "coins": 0,
+      "lastDaily": 0,
+      "xp": 35,
+      "level": 1,
+      "messages": 2,
+      "voiceTime": 0
+    },
+    "926366937599049818": {
+      "coins": 1000000000,
+      "lastDaily": 0,
+      "xp": 661,
+      "level": 4,
+      "messages": 34,
+      "voiceTime": 0
+    }
+  },
+  "giveaways": {},
+  "jackpot": 3669345755,
+  "txRoundId": 67433,
+  "txHistory": [
+    {
+      "total": 8,
+      "isTai": false,
+      "isChan": true
+    },
+    {
+      "total": 10,
+      "isTai": false,
+      "isChan": true
+    },
+    {
+      "total": 13,
+      "isTai": true,
+      "isChan": false
+    },
+    {
+      "total": 15,
+      "isTai": true,
+      "isChan": false
+    },
+    {
+      "total": 11,
+      "isTai": true,
+      "isChan": false
+    },
+    {
+      "total": 6,
+      "isTai": false,
+      "isChan": true
+    },
+    {
+      "total": 7,
+      "isTai": false,
+      "isChan": false
+    },
+    {
+      "total": 14,
+      "isTai": true,
+      "isChan": true
+    },
+    {
+      "total": 12,
+      "isTai": true,
+      "isChan": true
+    },
+    {
+      "total": 11,
+      "isTai": true,
+      "isChan": false
+    },
+    {
+      "total": 14,
+      "isTai": true,
+      "isChan": true
+    },
+    {
+      "total": 9,
+      "isTai": false,
+      "isChan": false
+    },
+    {
+      "total": 12,
+      "isTai": true,
+      "isChan": true
+    },
+    {
+      "total": 16,
+      "isTai": true,
+      "isChan": true
+    },
+    {
+      "total": 5,
+      "isTai": false,
+      "isChan": false
+    },
+    {
+      "total": 8,
+      "isTai": false,
+      "isChan": true
+    },
+    {
+      "total": 13,
+      "isTai": true,
+      "isChan": false
+    },
+    {
+      "total": 7,
+      "isTai": false,
+      "isChan": false
+    },
+    {
+      "total": 9,
+      "isTai": false,
+      "isChan": false
+    },
+    {
+      "total": 6,
+      "isTai": false,
+      "isChan": true
+    },
+    {
+      "total": 6,
+      "isTai": false,
+      "isChan": true,
+      "d1": 1,
+      "d2": 2,
+      "d3": 3
+    },
+    {
+      "total": 11,
+      "isTai": true,
+      "isChan": false,
+      "d1": 2,
+      "d2": 6,
+      "d3": 3
+    },
+    {
+      "total": 8,
+      "isTai": false,
+      "isChan": true,
+      "d1": 2,
+      "d2": 1,
+      "d3": 5
+    },
+    {
+      "total": 14,
+      "isTai": true,
+      "isChan": true,
+      "d1": 6,
+      "d2": 2,
+      "d3": 6
+    },
+    {
+      "total": 10,
+      "isTai": false,
+      "isChan": true,
+      "d1": 2,
+      "d2": 5,
+      "d3": 3
+    },
+    {
+      "total": 9,
+      "isTai": false,
+      "isChan": false,
+      "d1": 2,
+      "d2": 6,
+      "d3": 1
+    },
+    {
+      "roundId": 67418,
+      "total": 9,
+      "isTai": false,
+      "isChan": false,
+      "d1": 1,
+      "d2": 5,
+      "d3": 3
+    },
+    {
+      "roundId": 67419,
+      "total": 15,
+      "isTai": true,
+      "isChan": false,
+      "d1": 4,
+      "d2": 5,
+      "d3": 6
+    },
+    {
+      "roundId": 67420,
+      "total": 11,
+      "isTai": true,
+      "isChan": false,
+      "d1": 4,
+      "d2": 3,
+      "d3": 4
+    },
+    {
+      "roundId": 67421,
+      "total": 11,
+      "isTai": true,
+      "isChan": false,
+      "d1": 2,
+      "d2": 3,
+      "d3": 6
+    },
+    {
+      "roundId": 67422,
+      "total": 14,
+      "isTai": true,
+      "isChan": true,
+      "d1": 4,
+      "d2": 6,
+      "d3": 4
+    },
+    {
+      "roundId": 67423,
+      "total": 7,
+      "isTai": false,
+      "isChan": false,
+      "d1": 3,
+      "d2": 2,
+      "d3": 2
+    },
+    {
+      "roundId": 67424,
+      "total": 14,
+      "isTai": true,
+      "isChan": true,
+      "d1": 6,
+      "d2": 5,
+      "d3": 3
+    },
+    {
+      "roundId": 67425,
+      "total": 13,
+      "isTai": true,
+      "isChan": false,
+      "d1": 5,
+      "d2": 4,
+      "d3": 4
+    },
+    {
+      "roundId": 67426,
+      "total": 5,
+      "isTai": false,
+      "isChan": false,
+      "d1": 1,
+      "d2": 2,
+      "d3": 2
+    },
+    {
+      "roundId": 67427,
+      "total": 15,
+      "isTai": true,
+      "isChan": false,
+      "d1": 6,
+      "d2": 3,
+      "d3": 6
+    },
+    {
+      "roundId": 67428,
+      "total": 12,
+      "isTai": true,
+      "isChan": true,
+      "d1": 6,
+      "d2": 4,
+      "d3": 2
+    },
+    {
+      "roundId": 67429,
+      "total": 7,
+      "isTai": false,
+      "isChan": false,
+      "d1": 1,
+      "d2": 4,
+      "d3": 2
+    },
+    {
+      "roundId": 67430,
+      "total": 10,
+      "isTai": false,
+      "isChan": true,
+      "d1": 3,
+      "d2": 1,
+      "d3": 6
+    },
+    {
+      "roundId": 67431,
+      "total": 11,
+      "isTai": true,
+      "isChan": false,
+      "d1": 6,
+      "d2": 1,
+      "d3": 4
+    },
+    {
+      "roundId": 67432,
+      "total": 9,
+      "isTai": false,
+      "isChan": false,
+      "d1": 5,
+      "d2": 3,
+      "d3": 1
+    }
+  ]
+}
