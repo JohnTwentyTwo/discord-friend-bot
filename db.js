@@ -208,11 +208,24 @@ function getUserWarnings(userId) {
     return data.modLogs.filter(l => l.targetId === userId);
 }
 
+// Ghi nhận biến động thắng thua gần đây của người chơi
+function recordGameResult(userId, { net, game }) {
+    const user = getUser(userId);
+    user.recentGame = {
+        net: Number(net) || 0,
+        game: game || 'Tài Xỉu',
+        timestamp: Date.now()
+    };
+    saveData();
+    return user;
+}
+
 loadData();
 
 module.exports = {
     getUser,
     updateUser,
+    recordGameResult,
     addMessageXP,
     addVoiceTime,
     getTopUsers,

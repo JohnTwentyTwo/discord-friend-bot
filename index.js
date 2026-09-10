@@ -33,6 +33,7 @@ const {
 const googleTTS = require('google-tts-api');
 const db = require('./db');
 const { renderTaiXiuResultImage, renderSoiCauChart, generateTaiXiuAnimationGif } = require('./dice_renderer');
+const { renderLeaderboardImage } = require('./leaderboard_renderer');
 
 // GuildMembers cần bật Privileged Intent trên Discord Developer Portal:
 // https://discord.com/developers/applications/1547186053696327811/bot
@@ -243,6 +244,9 @@ const commands = [
     new SlashCommandBuilder()
         .setName('top-xu')
         .setDescription('Bảng xếp hạng 10 đại gia giàu nhất server'),
+    new SlashCommandBuilder()
+        .setName('xephang')
+        .setDescription('Bảng xếp hạng 10 đại gia nhiều balance nhất kèm lịch sử ăn/thua gần đây'),
 
     // --- NHÓM THỐNG KÊ HOẠT ĐỘNG (STATS & LEVEL) ---
     new SlashCommandBuilder()
@@ -365,6 +369,16 @@ async function registerCommands() {
 // Format số tiền đẹp mắt (VD: 1,000,000)
 function formatNumber(num) {
     return (num || 0).toLocaleString('vi-VN');
+}
+
+// Format số tiền viết tắt (VD: 9.99B, 150M, 50k)
+function formatShortNumber(num) {
+    const abs = Math.abs(Number(num) || 0);
+    const sign = Number(num) < 0 ? '-' : '';
+    if (abs >= 1e9) return sign + (abs / 1e9).toFixed(2).replace(/\.00$/, '') + 'B';
+    if (abs >= 1e6) return sign + (abs / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (abs >= 1e3) return sign + (abs / 1e3).toFixed(1).replace(/\.0$/, '') + 'k';
+    return sign + formatNumber(abs);
 }
 
 // Format thời gian giây thành định dạng đọc được
@@ -683,13 +697,18 @@ async function finishTaiXiuRoom(messageId, channel) {
                     db.addJackpot(Math.max(10000, Math.floor(totalBetsAll * 0.05)));
                 }
 
-                // Trả thưởng vào ví người dùng
+                // Trả thưởng vào ví người dùng & Ghi nhận lịch sử thắng/thua gần đây
                 for (const w of winners) {
                     const basePayout = Math.floor(w.amount * w.multiplier);
                     const bonus = w.jackpotBonus || 0;
                     const totalPayout = basePayout + bonus;
                     w.payout = totalPayout;
                     db.updateUser(w.userId, d => { d.coins += totalPayout; });
+                    db.recordGameResult(w.userId, { net: totalPayout - w.amount, game: 'Tài Xỉu' });
+                }
+
+                for (const l of losers) {
+                    db.recordGameResult(l.userId, { net: -l.amount, game: 'Tài Xỉu' });
                 }
 
                 // BƯỚC 2: TRẢ KẾT QUẢ (Chuẩn 3 Embeds)
@@ -854,8 +873,10 @@ async function finishBauCuaRoom(messageId, channel) {
                         const payout = bet.amount + (bet.amount * matchedCount);
                         db.updateUser(userId, d => { d.coins += payout; });
                         winners.push({ userId, itemInfo, matchedCount, payout, betAmount: bet.amount });
+                        db.recordGameResult(userId, { net: payout - bet.amount, game: 'Bầu Cua' });
                     } else {
                         losers.push({ userId, itemInfo, betAmount: bet.amount });
+                        db.recordGameResult(userId, { net: -bet.amount, game: 'Bầu Cua' });
                     }
                 }
 
@@ -1572,24 +1593,60 @@ client.on('interactionCreate', async (interaction) => {
                 return interaction.reply({ embeds: [embed] });
             }
 
-            // Lệnh: /top-xu
-            if (commandName === 'top-xu') {
-                const top = db.getTopUsers('coins', 10);
-                let desc = '';
-                const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
+            // Lệnh: /top-xu hoặc /xephang
+            if (commandName === 'top-xu' || commandName === 'xephang') {
+                await interaction.deferReply();
+                const topUsers = db.getTopUsers('coins', 10);
+                const enrichedUsers = await Promise.all(topUsers.map(async (u) => {
+                    let member = interaction.guild?.members.cache.get(u.id);
+                    if (!member && interaction.guild) {
+                        member = await interaction.guild.members.fetch(u.id).catch(() => null);
+                    }
+                    let userObj = member?.user;
+                    if (!userObj) {
+                        userObj = await client.users.fetch(u.id).catch(() => null);
+                    }
+                    return {
+                        id: u.id,
+                        displayName: member?.displayName || userObj?.displayName || userObj?.username || `User ${u.id.slice(0, 6)}`,
+                        username: userObj?.username || `User ${u.id.slice(0, 6)}`,
+                        avatarURL: userObj ? userObj.displayAvatarURL({ extension: 'png', size: 128, forceStatic: true }) : null,
+                        coins: u.coins,
+                        level: u.level || 1,
+                        recentGame: u.recentGame || null
+                    };
+                }));
 
-                top.forEach((u, i) => {
-                    desc += `${medals[i]} <@${u.id}>: **${formatNumber(u.coins)}** xu (Level ${u.level})\n`;
+                const imageBuffer = await renderLeaderboardImage(enrichedUsers, {
+                    jackpot: db.getJackpot(),
+                    serverName: interaction.guild?.name || 'Discord Server'
                 });
+                const attachment = new AttachmentBuilder(imageBuffer, { name: 'bxh-daigia.png' });
+
+                const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
+                const list = enrichedUsers.map((u, i) => {
+                    let recentStr = '`― Chưa cược`';
+                    if (u.recentGame && u.recentGame.net !== 0) {
+                        const isWin = u.recentGame.net > 0;
+                        const icon = isWin ? '🟢' : '🔴';
+                        const label = isWin ? 'Ăn' : 'Thua';
+                        const sign = isWin ? '+' : '';
+                        recentStr = `${icon} **${label} ${sign}${formatShortNumber(u.recentGame.net)} xu** (${u.recentGame.game || 'Game'})`;
+                    }
+                    return `${medals[i]} <@${u.id}> — **${formatNumber(u.coins)}** xu (Lv.${u.level}) • ${recentStr}`;
+                }).join('\n') || '*Chưa có dữ liệu thành viên.*';
 
                 const embed = new EmbedBuilder()
-                    .setTitle('🏆 BẢNG XẾP HẠNG ĐẠI GIA SERVER')
-                    .setDescription(desc || 'Chưa có dữ liệu thành viên.')
+                    .setTitle('🏆 BẢNG XẾP HẠNG TOP 10 ĐẠI GIA SERVER')
+                    .setDescription(
+                        `> **Top 10 thành viên sở hữu số dư ví nhiều nhất & biến động thắng thua gần đây:**\n\n` + list
+                    )
                     .setColor(0xF1C40F)
-                    .setFooter({ text: 'Cạnh tranh làm giàu cùng cộng đồng' })
+                    .setImage('attachment://bxh-daigia.png')
+                    .setFooter({ text: 'Quản Lý Lê • Dữ liệu cập nhật tự động sau mỗi ván cược | Dùng .xephang' })
                     .setTimestamp();
 
-                return interaction.reply({ embeds: [embed] });
+                return interaction.editReply({ embeds: [embed], files: [attachment] });
             }
 
             // ==========================================
@@ -2820,18 +2877,71 @@ client.on('messageCreate', async (message) => {
         }
 
         // 5. Lệnh .top-xu / .topxu / .top
-        if (cmd === 'top-xu' || cmd === 'topxu' || cmd === 'top') {
+        // 5. Lệnh .xephang / .bxh / .top-xu / .topxu / .top
+        if (cmd === 'xephang' || cmd === 'bxh' || cmd === 'top-xu' || cmd === 'topxu' || cmd === 'top' || cmd === 'leaderboard') {
             const topUsers = db.getTopUsers('coins', 10);
+            const enrichedUsers = await Promise.all(topUsers.map(async (u) => {
+                let member = message.guild?.members.cache.get(u.id);
+                if (!member && message.guild) {
+                    member = await message.guild.members.fetch(u.id).catch(() => null);
+                }
+                let userObj = member?.user;
+                if (!userObj) {
+                    userObj = await client.users.fetch(u.id).catch(() => null);
+                }
+                return {
+                    id: u.id,
+                    displayName: member?.displayName || userObj?.displayName || userObj?.username || `User ${u.id.slice(0, 6)}`,
+                    username: userObj?.username || `User ${u.id.slice(0, 6)}`,
+                    avatarURL: userObj ? userObj.displayAvatarURL({ extension: 'png', size: 128, forceStatic: true }) : null,
+                    coins: u.coins,
+                    level: u.level || 1,
+                    recentGame: u.recentGame || null
+                };
+            }));
+
+            let imageBuffer;
+            try {
+                imageBuffer = await renderLeaderboardImage(enrichedUsers, {
+                    jackpot: db.getJackpot(),
+                    serverName: message.guild?.name || 'Discord Server'
+                });
+            } catch (err) {
+                console.error('[XEPHANG] Lỗi render ảnh:', err);
+            }
+
             const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
-            const list = topUsers.map((u, i) => `${medals[i]} <@${u.id}> — **${formatNumber(u.coins)}** xu (Level ${u.level})`).join('\n') || '*Chưa có dữ liệu.*';
+            const list = enrichedUsers.map((u, i) => {
+                let recentStr = '`― Chưa cược`';
+                if (u.recentGame && u.recentGame.net !== 0) {
+                    const isWin = u.recentGame.net > 0;
+                    const icon = isWin ? '🟢' : '🔴';
+                    const label = isWin ? 'Ăn' : 'Thua';
+                    const sign = isWin ? '+' : '';
+                    recentStr = `${icon} **${label} ${sign}${formatShortNumber(u.recentGame.net)} xu** (${u.recentGame.game || 'Game'})`;
+                }
+                return `${medals[i]} <@${u.id}> — **${formatNumber(u.coins)}** xu (Lv.${u.level}) • ${recentStr}`;
+            }).join('\n') || '*Chưa có dữ liệu.*';
 
             const embed = new EmbedBuilder()
-                .setTitle('🏆 TOP 10 ĐẠI GIA GIÀU NHẤT SERVER')
+                .setTitle('🏆 BẢNG XẾP HẠNG TOP 10 ĐẠI GIA SERVER')
                 .setColor(0xF1C40F)
-                .setDescription(list)
+                .setDescription(
+                    `> **Top 10 thành viên sở hữu số dư ví nhiều nhất & biến động thắng thua gần đây:**\n\n` + list
+                )
+                .setFooter({
+                    text: 'Quản Lý Lê • Cập nhật tự động sau mỗi ván cược | Dùng .xephang hoặc /xephang',
+                    iconURL: client.user.displayAvatarURL()
+                })
                 .setTimestamp();
 
-            return message.reply({ embeds: [embed] });
+            if (imageBuffer) {
+                const attachment = new AttachmentBuilder(imageBuffer, { name: 'bxh-daigia.png' });
+                embed.setImage('attachment://bxh-daigia.png');
+                return message.reply({ embeds: [embed], files: [attachment] });
+            } else {
+                return message.reply({ embeds: [embed] });
+            }
         }
 
         // 6. Lệnh .rank
@@ -2993,7 +3103,7 @@ client.on('messageCreate', async (message) => {
                     `▎ **KINH TẾ & VÍ TIỀN**\n` +
                     `• \`.bal\` / \`.xu\` / \`.vi\`: Xem số dư ví và level\n` +
                     `• \`.ck @user [số xu]\`: Chuyển xu cho bạn bè\n` +
-                    `• \`.top-xu\`: Top 10 đại gia giàu nhất server\n\n` +
+                    `• \`.xephang\` (hoặc \`.bxh\`, \`.top-xu\`): Render ảnh Top 10 đại gia & biến động ăn/thua\n\n` +
                     `▎ **TIỆN ÍCH KHÁC**\n` +
                     `• \`.rank [@user]\`: Thẻ thành viên (Level, XP, Chat, Voice)\n` +
                     `• \`.tts [nội dung]\`: Đọc giọng chị Google vào voice\n` +

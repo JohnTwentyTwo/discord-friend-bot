@@ -6,7 +6,12 @@
       "xp": 381,
       "level": 2,
       "messages": 19,
-      "voiceTime": 99
+      "voiceTime": 99,
+      "recentGame": {
+        "net": -50000000,
+        "game": "Tài Xỉu",
+        "timestamp": 1789019456900
+      }
     },
     "874583735054528532": {
       "coins": 9999998000,
@@ -14,7 +19,12 @@
       "xp": 1022,
       "level": 6,
       "messages": 53,
-      "voiceTime": 11
+      "voiceTime": 11,
+      "recentGame": {
+        "net": 150000000,
+        "game": "Tài Xỉu",
+        "timestamp": 1789019456899
+      }
     },
     "1547186053696327811": {
       "coins": 50000,
@@ -22,7 +32,12 @@
       "xp": 0,
       "level": 1,
       "messages": 0,
-      "voiceTime": 0
+      "voiceTime": 0,
+      "recentGame": {
+        "net": -10000,
+        "game": "Tài Xỉu",
+        "timestamp": 1789019456900
+      }
     },
     "920598271389495347": {
       "coins": 900,
@@ -30,7 +45,12 @@
       "xp": 0,
       "level": 1,
       "messages": 0,
-      "voiceTime": 0
+      "voiceTime": 0,
+      "recentGame": {
+        "net": 300,
+        "game": "Tài Xỉu",
+        "timestamp": 1789019456900
+      }
     },
     "642229607101104129": {
       "coins": 9003725400,
@@ -38,7 +58,12 @@
       "xp": 198,
       "level": 1,
       "messages": 10,
-      "voiceTime": 0
+      "voiceTime": 0,
+      "recentGame": {
+        "net": 85000000,
+        "game": "Tài Xỉu",
+        "timestamp": 1789019456900
+      }
     },
     "830708268292243486": {
       "coins": 0,
@@ -86,7 +111,12 @@
       "xp": 661,
       "level": 4,
       "messages": 34,
-      "voiceTime": 0
+      "voiceTime": 0,
+      "recentGame": {
+        "net": 20000000,
+        "game": "Bầu Cua",
+        "timestamp": 1789019456900
+      }
     }
   },
   "giveaways": {},
@@ -376,5 +406,6 @@
       "d2": 3,
       "d3": 1
     }
-  ]
+  ],
+  "modLogs": []
 }
