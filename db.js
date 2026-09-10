@@ -19,6 +19,7 @@ function loadData() {
             if (!data.giveaways) data.giveaways = {};
             if (typeof data.jackpot !== 'number') data.jackpot = 696546956;
             if (typeof data.txRoundId !== 'number') data.txRoundId = 67412;
+            if (!Array.isArray(data.modLogs)) data.modLogs = [];
             if (!Array.isArray(data.txHistory) || data.txHistory.length === 0) {
                 data.txHistory = [
                     { total: 8, isTai: false, isChan: true },
@@ -182,6 +183,31 @@ function addTxHistory(record) {
     return data.txHistory;
 }
 
+// Mod Logs & Quản Lý Kỷ Luật
+function addModLog(logEntry) {
+    if (!Array.isArray(data.modLogs)) data.modLogs = [];
+    const caseId = data.modLogs.length + 1;
+    const entry = {
+        caseId,
+        id: `CASE-${String(caseId).padStart(4, '0')}`,
+        timestamp: Date.now(),
+        ...logEntry
+    };
+    data.modLogs.push(entry);
+    saveData();
+    return entry;
+}
+
+function getModLogs(limit = 20) {
+    if (!Array.isArray(data.modLogs)) data.modLogs = [];
+    return data.modLogs.slice(-limit).reverse();
+}
+
+function getUserWarnings(userId) {
+    if (!Array.isArray(data.modLogs)) return [];
+    return data.modLogs.filter(l => l.targetId === userId);
+}
+
 loadData();
 
 module.exports = {
@@ -201,5 +227,9 @@ module.exports = {
     nextTxRoundId,
     getTxHistory,
     addTxHistory,
+    addModLog,
+    getModLogs,
+    getUserWarnings,
     saveData
 };
+

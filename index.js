@@ -77,9 +77,48 @@ const activeGameRooms = new Map();
 // Khóa đơn phiên Tài Xỉu (Chỉ cho phép duy nhất 1 phiên hoạt động cùng lúc trên server)
 let activeTxSession = null;
 
-// Hệ thống theo dõi Auto-Moderation
-const userWarnings = new Map();     // userId -> { count: number, lastWarn: number }
-const spamTracker = new Map();      // userId -> number[] (timestamps)
+// Kênh Nhật Ký Kỷ Luật & Vi Phạm
+const MOD_LOG_CHANNEL_ID = process.env.MOD_LOG_CHANNEL_ID || '1547482017380175872';
+
+async function sendModLogEmbed(guild, { action, target, moderator, reason, duration, caseId }) {
+    try {
+        const channel = await guild.channels.fetch(MOD_LOG_CHANNEL_ID).catch(() => null);
+        if (!channel) return;
+
+        const actionConfig = {
+            'WARN': { title: 'CẢNH CÁO THÀNH VIÊN', color: 0xFEE75C, emoji: '⚠️' },
+            'TIMEOUT': { title: 'TẠM KHÓA CHAT (TIMEOUT)', color: 0xFFA500, emoji: '⏳' },
+            'UNTIMEOUT': { title: 'GỠ KHÓA CHAT (UNTIMEOUT)', color: 0x57F287, emoji: '🟢' },
+            'KICK': { title: 'TRỤC XUẤT (KICK)', color: 0xED4245, emoji: '👢' },
+            'BAN': { title: 'CẤM VĨNH VIỄN (BAN)', color: 0x992D22, emoji: '🔨' },
+            'UNBAN': { title: 'GỠ LỆNH CẤM (UNBAN)', color: 0x5865F2, emoji: '🔓' }
+        };
+
+        const config = actionConfig[action] || { title: action, color: 0x5865F2, emoji: '🛡️' };
+        const totalLogs = db.getUserWarnings(target.id);
+
+        const embed = new EmbedBuilder()
+            .setColor(config.color)
+            .setAuthor({
+                name: `[NHẬT KÝ KỶ LUẬT] ${config.emoji} ${config.title}`,
+                iconURL: target.displayAvatarURL ? target.displayAvatarURL({ dynamic: true }) : null
+            })
+            .setTitle(`Án phạt: #${caseId || 'CASE-XXXX'}`)
+            .addFields(
+                { name: '👤 Đối Tượng Vi Phạm', value: `<@${target.id}> (\`${target.tag || target.id}\`)`, inline: true },
+                { name: '👮 Người Xử Lý', value: `<@${moderator.id}> (\`${moderator.tag || moderator.id}\`)`, inline: true },
+                { name: '⏱️ Mức Độ / Thời Gian', value: duration ? `**${duration}**` : 'Cố định', inline: true },
+                { name: '📄 Lý Do', value: `\`\`\`${reason || 'Không có lý do cụ thể'}\`\`\``, inline: false },
+                { name: '📜 Tổng Tiền Án', value: `Thành viên này hiện có **${totalLogs.length}** ghi nhận vi phạm trong hệ thống.`, inline: false }
+            )
+            .setFooter({ text: `ID Đối tượng: ${target.id} • Quản Lý Lê` })
+            .setTimestamp();
+
+        await channel.send({ embeds: [embed] });
+    } catch (e) {
+        console.error('[MOD-LOG] Lỗi khi gửi log:', e.message);
+    }
+}
 
 // ==========================================
 // 1. ĐĂNG KÝ DANH SÁCH SLASH COMMANDS (CHUẨN MXT)
@@ -244,7 +283,52 @@ const commands = [
         .setDescription('Xem biểu đồ 2 tầng Thống Kê Phiên Tài Xỉu'),
     new SlashCommandBuilder()
         .setName('thongke')
-        .setDescription('Xem biểu đồ 2 tầng Thống Kê Phiên Tài Xỉu')
+        .setDescription('Xem biểu đồ 2 tầng Thống Kê Phiên Tài Xỉu'),
+
+    // --- NHÓM KỶ LUẬT & QUẢN TRỊ (MODERATION & MOD LOGS) ---
+    new SlashCommandBuilder()
+        .setName('warn')
+        .setDescription('Cảnh cáo vi phạm thành viên và ghi vào Nhật Ký Vi Phạm')
+        .addUserOption(opt => opt.setName('user').setDescription('Thành viên cần cảnh cáo').setRequired(true))
+        .addStringOption(opt => opt.setName('ly_do').setDescription('Lý do cảnh cáo').setRequired(true)),
+    new SlashCommandBuilder()
+        .setName('timeout')
+        .setDescription('Tạm khóa chat / cách ly thành viên vi phạm')
+        .addUserOption(opt => opt.setName('user').setDescription('Thành viên cần phạt').setRequired(true))
+        .addIntegerOption(opt => opt.setName('thoi_gian').setDescription('Thời hạn timeout').setRequired(true)
+            .addChoices(
+                { name: '10 Phút', value: 10 },
+                { name: '1 Giờ', value: 60 },
+                { name: '12 Giờ', value: 720 },
+                { name: '1 Ngày (24h)', value: 1440 },
+                { name: '3 Ngày', value: 4320 },
+                { name: '7 Ngày (1 tuần)', value: 10080 }
+            ))
+        .addStringOption(opt => opt.setName('ly_do').setDescription('Lý do phạt').setRequired(true)),
+    new SlashCommandBuilder()
+        .setName('untimeout')
+        .setDescription('Gỡ phạt timeout cho thành viên')
+        .addUserOption(opt => opt.setName('user').setDescription('Thành viên cần gỡ phạt').setRequired(true))
+        .addStringOption(opt => opt.setName('ly_do').setDescription('Lý do gỡ phạt').setRequired(false)),
+    new SlashCommandBuilder()
+        .setName('kick')
+        .setDescription('Trục xuất thành viên ra khỏi server')
+        .addUserOption(opt => opt.setName('user').setDescription('Thành viên cần kick').setRequired(true))
+        .addStringOption(opt => opt.setName('ly_do').setDescription('Lý do trục xuất').setRequired(true)),
+    new SlashCommandBuilder()
+        .setName('ban')
+        .setDescription('Cấm vĩnh viễn thành viên khỏi server')
+        .addUserOption(opt => opt.setName('user').setDescription('Thành viên cần ban').setRequired(true))
+        .addStringOption(opt => opt.setName('ly_do').setDescription('Lý do cấm vĩnh viễn').setRequired(true)),
+    new SlashCommandBuilder()
+        .setName('unban')
+        .setDescription('Gỡ lệnh cấm theo ID người dùng')
+        .addStringOption(opt => opt.setName('user_id').setDescription('ID của tài khoản cần gỡ cấm').setRequired(true))
+        .addStringOption(opt => opt.setName('ly_do').setDescription('Lý do gỡ cấm').setRequired(false)),
+    new SlashCommandBuilder()
+        .setName('lich-su-vi-pham')
+        .setDescription('Tra cứu hồ sơ vi phạm và các án phạt của một thành viên')
+        .addUserOption(opt => opt.setName('user').setDescription('Thành viên cần tra cứu').setRequired(true))
 ];
 
 const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
@@ -942,6 +1026,280 @@ client.on('interactionCreate', async (interaction) => {
             // ==========================================
             // LỆNH QUẢN TRỊ KINH TẾ (CHỈ DÀNH CHO ADMIN)
             // ==========================================
+
+            // ==========================================
+            // LỆNH KỶ LUẬT & BAN QUẢN TRỊ (MODERATION)
+            // ==========================================
+            if (['warn', 'timeout', 'untimeout', 'kick', 'ban', 'unban', 'lich-su-vi-pham'].includes(commandName)) {
+                const isAdmin = interaction.member.permissions.has(PermissionsBitField.Flags.Administrator) ||
+                    interaction.member.permissions.has(PermissionsBitField.Flags.ModerateMembers) ||
+                    interaction.member.permissions.has(PermissionsBitField.Flags.BanMembers) ||
+                    interaction.member.permissions.has(PermissionsBitField.Flags.KickMembers) ||
+                    interaction.guild.ownerId === user.id;
+
+                if (!isAdmin && commandName !== 'lich-su-vi-pham') {
+                    return interaction.reply({ content: '✕ Bạn không có quyền hạn Quản trị viên / Điều hành viên để sử dụng lệnh kỷ luật này!', ephemeral: true });
+                }
+
+                // 1. /warn
+                if (commandName === 'warn') {
+                    const targetUser = interaction.options.getUser('user');
+                    const reason = interaction.options.getString('ly_do');
+
+                    if (targetUser.bot) {
+                        return interaction.reply({ content: '✕ Không thể xử phạt tài khoản Bot!', ephemeral: true });
+                    }
+
+                    const logEntry = db.addModLog({
+                        action: 'WARN',
+                        targetId: targetUser.id,
+                        targetTag: targetUser.tag,
+                        moderatorId: user.id,
+                        moderatorTag: user.tag,
+                        reason: reason
+                    });
+
+                    await targetUser.send(`⚠️ **CẢNH CÁO VI PHẠM TỪ SERVER [${guild.name}]:**\n• **Lý do:** ${reason}\n• **Người xử lý:** <@${user.id}>\n*Vui lòng đọc lại nội quy server để tránh bị kỷ luật nặng hơn!*`).catch(() => null);
+
+                    await sendModLogEmbed(guild, {
+                        action: 'WARN',
+                        target: targetUser,
+                        moderator: user,
+                        reason: reason,
+                        caseId: logEntry.id
+                    });
+
+                    const totalWarns = db.getUserWarnings(targetUser.id).length;
+                    return interaction.reply({
+                        content: `✅ **Đã ghi nhận Cảnh cáo thành viên** <@${targetUser.id}>!\n• **Mã án phạt:** \`#${logEntry.id}\`\n• **Lý do:** ${reason}\n• **Tổng số vi phạm hiện tại:** **${totalWarns}** lần.\n*(Đã lưu vào <#${MOD_LOG_CHANNEL_ID}>)*`
+                    });
+                }
+
+                // 2. /timeout
+                if (commandName === 'timeout') {
+                    const targetUser = interaction.options.getUser('user');
+                    const durationMins = interaction.options.getInteger('thoi_gian');
+                    const reason = interaction.options.getString('ly_do');
+
+                    const targetMember = await guild.members.fetch(targetUser.id).catch(() => null);
+                    if (!targetMember) {
+                        return interaction.reply({ content: '✕ Không tìm thấy thành viên này trong server!', ephemeral: true });
+                    }
+                    if (targetMember.permissions.has(PermissionsBitField.Flags.Administrator) || targetUser.id === guild.ownerId) {
+                        return interaction.reply({ content: '✕ Không thể timeout Quản trị viên hoặc Chủ server!', ephemeral: true });
+                    }
+
+                    const ms = durationMins * 60 * 1000;
+                    await targetMember.timeout(ms, `${reason} (Bởi ${user.tag})`);
+
+                    const logEntry = db.addModLog({
+                        action: 'TIMEOUT',
+                        targetId: targetUser.id,
+                        targetTag: targetUser.tag,
+                        moderatorId: user.id,
+                        moderatorTag: user.tag,
+                        reason: reason,
+                        durationMinutes: durationMins
+                    });
+
+                    let durationText = `${durationMins} phút`;
+                    if (durationMins >= 1440) durationText = `${Math.floor(durationMins / 1440)} ngày`;
+                    else if (durationMins >= 60) durationText = `${Math.floor(durationMins / 60)} giờ`;
+
+                    await targetUser.send(`⏳ **BẠN ĐÃ BỊ TẠM KHÓA CHAT (TIMEOUT) TẠI SERVER [${guild.name}]:**\n• **Thời hạn:** ${durationText}\n• **Lý do:** ${reason}\n• **Người xử lý:** <@${user.id}>`).catch(() => null);
+
+                    await sendModLogEmbed(guild, {
+                        action: 'TIMEOUT',
+                        target: targetUser,
+                        moderator: user,
+                        reason: reason,
+                        duration: durationText,
+                        caseId: logEntry.id
+                    });
+
+                    return interaction.reply({
+                        content: `⏳ **Đã cách ly / timeout thành viên** <@${targetUser.id}> trong **${durationText}**!\n• **Mã án phạt:** \`#${logEntry.id}\`\n• **Lý do:** ${reason}\n*(Đã lưu vào <#${MOD_LOG_CHANNEL_ID}>)*`
+                    });
+                }
+
+                // 3. /untimeout
+                if (commandName === 'untimeout') {
+                    const targetUser = interaction.options.getUser('user');
+                    const reason = interaction.options.getString('ly_do') || 'Gỡ phạt trước hạn';
+
+                    const targetMember = await guild.members.fetch(targetUser.id).catch(() => null);
+                    if (!targetMember) {
+                        return interaction.reply({ content: '✕ Không tìm thấy thành viên này trong server!', ephemeral: true });
+                    }
+
+                    await targetMember.timeout(null, reason);
+
+                    const logEntry = db.addModLog({
+                        action: 'UNTIMEOUT',
+                        targetId: targetUser.id,
+                        targetTag: targetUser.tag,
+                        moderatorId: user.id,
+                        moderatorTag: user.tag,
+                        reason: reason
+                    });
+
+                    await sendModLogEmbed(guild, {
+                        action: 'UNTIMEOUT',
+                        target: targetUser,
+                        moderator: user,
+                        reason: reason,
+                        caseId: logEntry.id
+                    });
+
+                    return interaction.reply({ content: `🟢 **Đã gỡ khóa chat (untimeout) cho** <@${targetUser.id}>! Lý do: ${reason}` });
+                }
+
+                // 4. /kick
+                if (commandName === 'kick') {
+                    const targetUser = interaction.options.getUser('user');
+                    const reason = interaction.options.getString('ly_do');
+
+                    const targetMember = await guild.members.fetch(targetUser.id).catch(() => null);
+                    if (!targetMember) {
+                        return interaction.reply({ content: '✕ Không tìm thấy thành viên này trong server!', ephemeral: true });
+                    }
+                    if (!targetMember.kickable) {
+                        return interaction.reply({ content: '✕ Bot không đủ quyền để trục xuất thành viên này (vai trò của họ cao hơn bot)!', ephemeral: true });
+                    }
+
+                    await targetUser.send(`👢 **BẠN ĐÃ BỊ TRỤC XUẤT (KICK) KHỎI SERVER [${guild.name}]:**\n• **Lý do:** ${reason}\n• **Người xử lý:** <@${user.id}>`).catch(() => null);
+                    await targetMember.kick(`${reason} (Bởi ${user.tag})`);
+
+                    const logEntry = db.addModLog({
+                        action: 'KICK',
+                        targetId: targetUser.id,
+                        targetTag: targetUser.tag,
+                        moderatorId: user.id,
+                        moderatorTag: user.tag,
+                        reason: reason
+                    });
+
+                    await sendModLogEmbed(guild, {
+                        action: 'KICK',
+                        target: targetUser,
+                        moderator: user,
+                        reason: reason,
+                        caseId: logEntry.id
+                    });
+
+                    return interaction.reply({
+                        content: `👢 **Đã trục xuất (Kick)** <@${targetUser.id}> khỏi server!\n• **Mã án phạt:** \`#${logEntry.id}\`\n• **Lý do:** ${reason}\n*(Đã lưu vào <#${MOD_LOG_CHANNEL_ID}>)*`
+                    });
+                }
+
+                // 5. /ban
+                if (commandName === 'ban') {
+                    const targetUser = interaction.options.getUser('user');
+                    const reason = interaction.options.getString('ly_do');
+
+                    const targetMember = await guild.members.fetch(targetUser.id).catch(() => null);
+                    if (targetMember && !targetMember.bannable) {
+                        return interaction.reply({ content: '✕ Bot không đủ quyền để cấm thành viên này (vai trò của họ cao hơn bot)!', ephemeral: true });
+                    }
+
+                    await targetUser.send(`🔨 **BẠN ĐÃ BỊ CẤM VĨNH VIỄN (BAN) KHỎI SERVER [${guild.name}]:**\n• **Lý do:** ${reason}\n• **Người xử lý:** <@${user.id}>`).catch(() => null);
+                    await guild.bans.create(targetUser.id, { reason: `${reason} (Bởi ${user.tag})` });
+
+                    const logEntry = db.addModLog({
+                        action: 'BAN',
+                        targetId: targetUser.id,
+                        targetTag: targetUser.tag,
+                        moderatorId: user.id,
+                        moderatorTag: user.tag,
+                        reason: reason
+                    });
+
+                    await sendModLogEmbed(guild, {
+                        action: 'BAN',
+                        target: targetUser,
+                        moderator: user,
+                        reason: reason,
+                        caseId: logEntry.id
+                    });
+
+                    return interaction.reply({
+                        content: `🔨 **Đã cấm vĩnh viễn (Ban)** <@${targetUser.id}> khỏi server!\n• **Mã án phạt:** \`#${logEntry.id}\`\n• **Lý do:** ${reason}\n*(Đã lưu vào <#${MOD_LOG_CHANNEL_ID}>)*`
+                    });
+                }
+
+                // 6. /unban
+                if (commandName === 'unban') {
+                    const targetId = interaction.options.getString('user_id');
+                    const reason = interaction.options.getString('ly_do') || 'Ân xá / Gỡ cấm';
+
+                    try {
+                        const banInfo = await guild.bans.fetch(targetId);
+                        await guild.bans.remove(targetId, `${reason} (Bởi ${user.tag})`);
+
+                        const logEntry = db.addModLog({
+                            action: 'UNBAN',
+                            targetId: targetId,
+                            targetTag: banInfo.user.tag,
+                            moderatorId: user.id,
+                            moderatorTag: user.tag,
+                            reason: reason
+                        });
+
+                        await sendModLogEmbed(guild, {
+                            action: 'UNBAN',
+                            target: banInfo.user,
+                            moderator: user,
+                            reason: reason,
+                            caseId: logEntry.id
+                        });
+
+                        return interaction.reply({ content: `🔓 **Đã gỡ cấm (unban) thành công cho tài khoản:** **${banInfo.user.tag}** (\`${targetId}\`). Lý do: ${reason}` });
+                    } catch (e) {
+                        return interaction.reply({ content: `✕ Không tìm thấy lệnh cấm nào đối với ID: \`${targetId}\`!`, ephemeral: true });
+                    }
+                }
+
+                // 7. /lich-su-vi-pham
+                if (commandName === 'lich-su-vi-pham') {
+                    const targetUser = interaction.options.getUser('user');
+                    const records = db.getUserWarnings(targetUser.id);
+
+                    const historyEmbed = new EmbedBuilder()
+                        .setColor(records.length > 0 ? 0xED4245 : 0x57F287)
+                        .setAuthor({
+                            name: `Hồ Sơ Kỷ Luật — ${targetUser.tag}`,
+                            iconURL: targetUser.displayAvatarURL ? targetUser.displayAvatarURL({ dynamic: true }) : null
+                        })
+                        .setTitle(`📜 Tiền Án Tiền Sự Của Thành Viên`)
+                        .setDescription(
+                            `• **Đối tượng:** <@${targetUser.id}> (\`${targetUser.id}\`)\n` +
+                            `• **Tổng số lần bị xử phạt:** **${records.length}** lần\n` +
+                            (records.length === 0 ? '\n✨ *Thành viên này có lý lịch hoàn toàn trong sạch, chưa từng vi phạm nội quy.*' : '')
+                        );
+
+                    if (records.length > 0) {
+                        const actionEmoji = {
+                            'WARN': '⚠️ Cảnh cáo',
+                            'TIMEOUT': '⏳ Khóa chat',
+                            'UNTIMEOUT': '🟢 Gỡ khóa',
+                            'KICK': '👢 Trục xuất',
+                            'BAN': '🔨 Cấm vĩnh viễn',
+                            'UNBAN': '🔓 Gỡ cấm'
+                        };
+                        const recent = records.slice(-8).reverse();
+                        recent.forEach(r => {
+                            const timeStr = `<t:${Math.floor(r.timestamp / 1000)}:f>`;
+                            historyEmbed.addFields({
+                                name: `${actionEmoji[r.action] || r.action} • #${r.id}`,
+                                value: `• **Thời điểm:** ${timeStr}\n• **Người phạt:** <@${r.moderatorId}>\n• **Lý do:** ${r.reason}`
+                            });
+                        });
+                    }
+
+                    historyEmbed.setFooter({ text: 'Hệ thống Quản Lý Kỷ Luật • Quản Lý Lê' }).setTimestamp();
+                    return interaction.reply({ embeds: [historyEmbed] });
+                }
+            }
 
             // Lệnh: /nap-tien hoặc /naptien (Chỉ Admin)
             if (commandName === 'nap-tien' || commandName === 'naptien') {
