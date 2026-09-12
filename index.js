@@ -27,6 +27,8 @@ const {
     createAudioPlayer,
     createAudioResource,
     AudioPlayerStatus,
+    VoiceConnectionStatus,
+    entersState,
     getVoiceConnection
 } = require('@discordjs/voice');
 
@@ -73,6 +75,8 @@ const voiceSessions = new Map();
 
 // Cache audio player cho từng guild (guildId -> player)
 const guildPlayers = new Map();
+// Cache timeout tự động rời phòng sau khi phát xong TTS (guildId -> timeout)
+const ttsLeaveTimeouts = new Map();
 
 // Cache lưu trữ các phòng game cược cộng đồng đang diễn ra (messageId -> room)
 const activeGameRooms = new Map();
@@ -1008,13 +1012,76 @@ client.on('guildMemberAdd', async (member) => {
     }
 });
 
+// Hàm dọn dẹp và ngắt kết nối Voice an toàn, triệt tiêu tự động reconnect
+function cleanupVoice(guildId) {
+    if (ttsLeaveTimeouts.has(guildId)) {
+        clearTimeout(ttsLeaveTimeouts.get(guildId));
+        ttsLeaveTimeouts.delete(guildId);
+    }
+    const player = guildPlayers.get(guildId);
+    if (player) {
+        try { player.stop(); } catch {}
+        guildPlayers.delete(guildId);
+    }
+    const connection = getVoiceConnection(guildId);
+    if (connection) {
+        try {
+            if (connection.state.status !== VoiceConnectionStatus.Destroyed) {
+                connection.destroy();
+            }
+        } catch (e) {
+            console.warn('[VOICE CLEANUP] Lỗi destroy connection:', e.message);
+        }
+    }
+}
+
+// Lấy hoặc tạo mới Voice Connection, xử lý chống tự động reconnect khi bị disconnect
+function getOrCreateVoiceConnection(voiceChannel) {
+    const guildId = voiceChannel.guild.id;
+    let connection = getVoiceConnection(guildId);
+
+    if (!connection || connection.state.status === VoiceConnectionStatus.Destroyed) {
+        connection = joinVoiceChannel({
+            channelId: voiceChannel.id,
+            guildId: guildId,
+            adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+        });
+
+        // Bắt sự kiện Disconnected: nếu bị disconnect hoặc kick khỏi voice thì hủy kết nối ngay, không tự reconnect!
+        connection.on(VoiceConnectionStatus.Disconnected, async () => {
+            try {
+                await Promise.race([
+                    entersState(connection, VoiceConnectionStatus.Signalling, 2_000),
+                    entersState(connection, VoiceConnectionStatus.Connecting, 2_000),
+                ]);
+                // Nếu đang chuyển channel thì duy trì kết nối
+            } catch {
+                // Bị disconnect thật sự do người dùng ngắt kết nối: Hủy bỏ ngay lập tức, không cho phép reconnect
+                cleanupVoice(guildId);
+            }
+        });
+    } else if (connection.joinConfig.channelId !== voiceChannel.id) {
+        // Nếu bot đang ở phòng khác, di chuyển sang phòng mới
+        connection.rejoin({
+            channelId: voiceChannel.id,
+            selfDeaf: true,
+            selfMute: false
+        });
+    }
+    return connection;
+}
+
 // Helper đọc TTS qua Voice
 async function speakTTS(voiceChannel, text) {
-    const connection = joinVoiceChannel({
-        channelId: voiceChannel.id,
-        guildId: voiceChannel.guild.id,
-        adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-    });
+    const guildId = voiceChannel.guild.id;
+
+    // Xóa timeout hẹn giờ rời phòng nếu đang đếm ngược
+    if (ttsLeaveTimeouts.has(guildId)) {
+        clearTimeout(ttsLeaveTimeouts.get(guildId));
+        ttsLeaveTimeouts.delete(guildId);
+    }
+
+    const connection = getOrCreateVoiceConnection(voiceChannel);
 
     const url = googleTTS.getAudioUrl(text, {
         lang: 'vi',
@@ -1023,10 +1090,26 @@ async function speakTTS(voiceChannel, text) {
         timeout: 10000,
     });
 
-    let player = guildPlayers.get(voiceChannel.guild.id);
+    let player = guildPlayers.get(guildId);
     if (!player) {
         player = createAudioPlayer();
-        guildPlayers.set(voiceChannel.guild.id, player);
+        guildPlayers.set(guildId, player);
+
+        // Khi đọc xong: hẹn giờ sau 45s nếu không ai dùng TTS nữa thì bot tự động rời phòng
+        player.on(AudioPlayerStatus.Idle, () => {
+            if (ttsLeaveTimeouts.has(guildId)) {
+                clearTimeout(ttsLeaveTimeouts.get(guildId));
+            }
+            const timeout = setTimeout(() => {
+                console.log(`[TTS] Đã đọc xong và không có thêm tin nhắn TTS mới, bot tự động rời voice.`);
+                cleanupVoice(guildId);
+            }, 45000);
+            ttsLeaveTimeouts.set(guildId, timeout);
+        });
+
+        player.on('error', err => {
+            console.error('[TTS Player Error]', err.message);
+        });
     }
 
     const resource = createAudioResource(url);
@@ -1777,11 +1860,7 @@ client.on('interactionCreate', async (interaction) => {
                     return interaction.reply({ content: '✕ Bạn phải ở trong phòng Voice trước!', ephemeral: true });
                 }
 
-                joinVoiceChannel({
-                    channelId: voiceChannel.id,
-                    guildId: voiceChannel.guild.id,
-                    adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-                });
+                getOrCreateVoiceConnection(voiceChannel);
 
                 return interaction.reply({ content: `✓ Đã kết nối vào phòng voice **${voiceChannel.name}**!`, ephemeral: true });
             }
@@ -1789,7 +1868,7 @@ client.on('interactionCreate', async (interaction) => {
             if (commandName === 'leave') {
                 const connection = getVoiceConnection(interaction.guild.id);
                 if (connection) {
-                    connection.destroy();
+                    cleanupVoice(interaction.guild.id);
                     return interaction.reply({ content: '✓ Bot đã rời khỏi phòng voice.', ephemeral: true });
                 }
                 return interaction.reply({ content: '✕ Bot hiện không ở trong phòng voice nào!', ephemeral: true });
@@ -2571,8 +2650,30 @@ client.on('interactionCreate', async (interaction) => {
 
 // 5. Hệ thống Voice tự động (Join-to-Create & Tính thời gian treo Voice)
 client.on('voiceStateUpdate', async (oldState, newState) => {
+    // 1. Kiểm tra nếu chính là Bot bị ngắt kết nối hoặc bị kick khỏi voice
+    if (oldState.id === client.user.id) {
+        if (oldState.channelId && !newState.channelId) {
+            console.log(`[VOICE] Bot Quản Lý Lê đã bị ngắt kết nối khỏi phòng thoại ${oldState.channel?.name || oldState.channelId}. Dọn dẹp kết nối.`);
+            cleanupVoice(oldState.guild.id);
+            return;
+        }
+    }
+
     const { member, guild } = newState;
     if (!member || member.user.bot) return;
+
+    // 2. Nếu phòng thoại mà Bot đang ở không còn người nào (mọi người đã rời đi), tự động rời phòng
+    const botConn = getVoiceConnection(guild.id);
+    if (botConn && botConn.joinConfig && botConn.joinConfig.channelId) {
+        const botChan = guild.channels.cache.get(botConn.joinConfig.channelId);
+        if (botChan) {
+            const humanCount = botChan.members.filter(m => !m.user.bot).size;
+            if (humanCount === 0) {
+                console.log(`[VOICE] Phòng thoại ${botChan.name} không còn ai, bot tự động rời.`);
+                cleanupVoice(guild.id);
+            }
+        }
+    }
 
     const userId = member.id;
     const now = Date.now();
@@ -2989,17 +3090,13 @@ client.on('messageCreate', async (message) => {
         if (cmd === 'join') {
             const voiceChannel = member.voice.channel;
             if (!voiceChannel) return message.reply('> Bạn phải ở trong một kênh voice!');
-            joinVoiceChannel({
-                channelId: voiceChannel.id,
-                guildId: guild.id,
-                adapterCreator: guild.voiceAdapterCreator
-            });
+            getOrCreateVoiceConnection(voiceChannel);
             return message.reply(`✅ Đã tham gia phòng thoại **${voiceChannel.name}**!`);
         }
         if (cmd === 'leave') {
             const conn = getVoiceConnection(guild.id);
             if (conn) {
-                conn.destroy();
+                cleanupVoice(guild.id);
                 return message.reply('👋 Đã rời khỏi phòng thoại voice!');
             }
             return message.reply('> Bot hiện không ở trong phòng voice nào.');
