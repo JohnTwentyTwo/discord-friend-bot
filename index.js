@@ -1503,7 +1503,7 @@ client.on('interactionCreate', async (interaction) => {
             if (commandName === 'balance') {
                 const target = interaction.options.getUser('user') || user;
                 const u = db.getUser(target.id);
-                const nextXP = u.level * 200;
+                const nextXP = db.getNextLevelXP(u.level);
 
                 const embed = new EmbedBuilder()
                     .setTitle(`💰 VÍ TIỀN CỦA ${target.displayName.toUpperCase()}`)
@@ -1723,7 +1723,7 @@ client.on('interactionCreate', async (interaction) => {
             if (commandName === 'rank') {
                 const target = interaction.options.getUser('user') || user;
                 const u = db.getUser(target.id);
-                const nextXP = u.level * 200;
+                const nextXP = db.getNextLevelXP(u.level);
                 const percent = Math.min(Math.round((u.xp / nextXP) * 100), 100);
 
                 const progressBar = '▰'.repeat(Math.floor(percent / 10)) + '▱'.repeat(10 - Math.floor(percent / 10));
@@ -2791,10 +2791,17 @@ client.on('messageCreate', async (message) => {
         return handleWordChainMessage(message, db);
     }
 
-    // A. Tích lũy tin nhắn và XP (Hệ thống Level)
-    const { user, leveledUp } = db.addMessageXP(message.author.id);
+    // A. Tích lũy tin nhắn và XP (Hệ thống Level chống spam & giãn cách)
+    const { user, leveledUp, rewardCoins } = db.addMessageXP(message.author.id);
     if (leveledUp) {
-        channel.send(`🎉 Chúc mừng <@${message.author.id}> đã đạt **Level ${user.level}**! Nhận ngay **+${formatNumber(user.level * 500)} xu** thưởng.`);
+        const rewardText = rewardCoins > 0 ? ` Thưởng ngay **+${formatNumber(rewardCoins)} xu** vào ví!` : '';
+        channel.send({
+            content: `🎉 Chúc mừng <@${message.author.id}> đã thăng cấp lên **Level ${user.level}**!${rewardText}`,
+            allowedMentions: { users: [message.author.id] }
+        }).then(lvlMsg => {
+            // Tự động xóa sau 8 giây để tránh làm rác và trôi phòng chat
+            setTimeout(() => lvlMsg.delete().catch(() => {}), 8000);
+        }).catch(() => {});
     }
 
     // ==========================================
@@ -2905,7 +2912,7 @@ client.on('messageCreate', async (message) => {
         if (cmd === 'balance' || cmd === 'bal' || cmd === 'xu' || cmd === 'vi' || cmd === 'tien') {
             const target = message.mentions.users.first() || message.author;
             const u = db.getUser(target.id);
-            const nextXP = u.level * 200;
+            const nextXP = db.getNextLevelXP(u.level);
 
             const embed = new EmbedBuilder()
                 .setTitle(`💰 VÍ TIỀN CỦA ${(target.displayName || target.username).toUpperCase()}`)
@@ -3011,7 +3018,7 @@ client.on('messageCreate', async (message) => {
         if (cmd === 'rank') {
             const target = message.mentions.users.first() || message.author;
             const u = db.getUser(target.id);
-            const nextXP = u.level * 200;
+            const nextXP = db.getNextLevelXP(u.level);
 
             const embed = new EmbedBuilder()
                 .setTitle(`⭐ THẺ THÀNH VIÊN: ${(target.displayName || target.username).toUpperCase()}`)

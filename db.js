@@ -225,28 +225,69 @@ function updateUser(userId, updater) {
     return user;
 }
 
-// Tích lũy tin nhắn & XP
+// Cooldown tích lũy XP chat chống spam (mỗi user chỉ nhận XP tối đa 1 lần mỗi 60 giây)
+const messageXpCooldowns = new Map();
+const XP_COOLDOWN_MS = 60 * 1000;
+
+// Tính lượng XP cần thiết để đạt cấp tiếp theo (độ dốc tăng theo cấp số mũ, tránh lên cấp dồn dập)
+function getNextLevelXP(level) {
+    const lvl = Math.max(1, parseInt(level, 10) || 1);
+    // Level 1: 1,000 XP | Level 2: 2,740 XP | Level 3: 5,110 XP | Level 5: 11,550 XP | Level 10: 36,430 XP
+    return Math.floor(500 * Math.pow(lvl, 1.8) + 500 * lvl);
+}
+
+// Tích lũy tin nhắn & XP (Có Cooldown 60s và thưởng xu khi thăng cấp)
 function addMessageXP(userId) {
     const user = getUser(userId);
-    user.messages += 1;
-    user.xp += Math.floor(Math.random() * 10) + 15;
+    user.messages = (user.messages || 0) + 1;
 
-    const nextLevelXP = user.level * 200;
-    let leveledUp = false;
-    if (user.xp >= nextLevelXP) {
-        user.level += 1;
-        leveledUp = true;
+    const now = Date.now();
+    const lastXpTime = messageXpCooldowns.get(userId) || 0;
+
+    // Nếu chưa đủ thời gian dãn cách 60 giây, chỉ tính số lượng tin nhắn, không cộng XP
+    if (now - lastXpTime < XP_COOLDOWN_MS) {
+        saveData();
+        return { user, leveledUp: false, rewardCoins: 0 };
     }
+
+    messageXpCooldowns.set(userId, now);
+    const earnedXP = Math.floor(Math.random() * 11) + 15; // 15 - 25 XP mỗi phút
+    user.xp = (user.xp || 0) + earnedXP;
+
+    let leveledUp = false;
+    let totalReward = 0;
+
+    while (user.xp >= getNextLevelXP(user.level)) {
+        user.level = (user.level || 1) + 1;
+        leveledUp = true;
+        // Thưởng xu xứng đáng khi vượt mốc khó: mỗi level thưởng level * 2,000 xu
+        const reward = user.level * 2000;
+        user.coins = (user.coins || 0) + reward;
+        totalReward += reward;
+    }
+
     saveData();
-    return { user, leveledUp };
+    return { user, leveledUp, rewardCoins: totalReward };
 }
 
 // Cộng thời gian voice
 function addVoiceTime(userId, seconds) {
     const user = getUser(userId);
-    user.voiceTime += seconds;
-    user.xp += Math.floor(seconds / 60) * 5;
+    user.voiceTime = (user.voiceTime || 0) + seconds;
+    user.xp = (user.xp || 0) + Math.floor(seconds / 60) * 5;
+
+    let leveledUp = false;
+    let totalReward = 0;
+    while (user.xp >= getNextLevelXP(user.level)) {
+        user.level = (user.level || 1) + 1;
+        leveledUp = true;
+        const reward = user.level * 2000;
+        user.coins = (user.coins || 0) + reward;
+        totalReward += reward;
+    }
+
     saveData();
+    return { user, leveledUp, rewardCoins: totalReward };
 }
 
 // Lấy Top BXH
@@ -402,6 +443,7 @@ module.exports = {
     updateUser,
     recordGameResult,
     addMessageXP,
+    getNextLevelXP,
     addVoiceTime,
     getTopUsers,
     createGiveaway,
