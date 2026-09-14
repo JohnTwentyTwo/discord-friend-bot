@@ -17,45 +17,49 @@ const play = require('play-dl');
 const ytdl = require('@distube/ytdl-core');
 const { EmbedBuilder } = require('discord.js');
 
+const path = require('path');
+const fs = require('fs');
+
 // Quản lý hàng đợi bài hát theo từng Guild (guildId -> queueObj)
 const guildQueues = new Map();
 
-// Tự động khởi tạo SoundCloud Free Client ID
-let scInitialized = false;
-async function initSoundCloud() {
-    if (scInitialized) return;
-    try {
-        const clientId = await play.getFreeClientID();
-        if (clientId) {
-            await play.setToken({ soundcloud: { client_id: clientId } });
-            scInitialized = true;
-            console.log('[MUSIC] Đã khởi tạo SoundCloud Client ID thành công.');
-        }
-    } catch (e) {
-        console.warn('[MUSIC] Lỗi khởi tạo SoundCloud:', e.message);
+// Trích xuất Cookie chuỗi từ file youtube_cookies.json hoặc ENV
+let ytCookieStr = '';
+try {
+    const cookiePath = path.join(__dirname, 'youtube_cookies.json');
+    if (fs.existsSync(cookiePath)) {
+        const cookies = JSON.parse(fs.readFileSync(cookiePath, 'utf-8'));
+        ytCookieStr = cookies.map(c => c.name + '=' + c.value).join('; ');
+        console.log(`[MUSIC] 🍪 Đã nạp ${cookies.length} YouTube cookies từ file youtube_cookies.json!`);
     }
+} catch (e) {
+    console.warn('[MUSIC] Không thể nạp file youtube_cookies.json:', e.message);
 }
 
-// Khởi tạo YouTube Cookie nếu có trong ENV
-async function initYouTubeCookie() {
-    const cookie = process.env.YOUTUBE_COOKIE || process.env.YT_COOKIE;
-    if (cookie && cookie.trim().length > 10) {
-        try {
-            await play.setToken({
-                youtube: {
-                    cookie: cookie.trim()
-                }
-            });
-            console.log('[MUSIC] 🟢 Đã nạp YouTube Cookie thành công vào play-dl!');
-        } catch (e) {
-            console.warn('[MUSIC] ⚠️ Không thể nạp YouTube Cookie:', e.message);
-        }
+if (!ytCookieStr) {
+    ytCookieStr = process.env.YOUTUBE_COOKIE || process.env.YT_COOKIE || '';
+}
+
+// Khởi tạo đồng thời SoundCloud Client ID và YouTube Cookie
+let tokensInitialized = false;
+async function initTokens() {
+    if (tokensInitialized) return;
+    try {
+        const clientId = await play.getFreeClientID();
+        const tokenConfig = {};
+        if (clientId) tokenConfig.soundcloud = { client_id: clientId };
+        if (ytCookieStr) tokenConfig.youtube = { cookie: ytCookieStr };
+
+        await play.setToken(tokenConfig);
+        tokensInitialized = true;
+        console.log('[MUSIC] 🟢 Đã khởi tạo hoàn tất SoundCloud & YouTube Tokens!');
+    } catch (e) {
+        console.warn('[MUSIC] ⚠️ Lỗi khởi tạo tokens:', e.message);
     }
 }
 
 // Chạy khởi tạo ban đầu
-initSoundCloud();
-initYouTubeCookie();
+initTokens();
 
 /**
  * Tìm kiếm bài hát và trả về thông tin bài
@@ -86,9 +90,26 @@ async function searchTrack(query) {
     if (isUrl && (query.includes('youtube.com') || query.includes('youtu.be'))) {
         try {
             const ytInfo = await play.video_basic_info(query);
+            const title = ytInfo.video_details.title || 'YouTube Track';
+            const cleanTitle = (title.replace(/\|.*$/i, '').trim()) + ' ' + (ytInfo.video_details.channel?.name || '');
+            
+            // Tìm bản nhạc chất lượng cao tương ứng trên SoundCloud để phát không bị chặn
+            const scMatch = await play.search(cleanTitle, { source: { soundcloud: 'tracks' }, limit: 1 });
+            if (scMatch && scMatch.length > 0) {
+                return {
+                    title: title,
+                    url: scMatch[0].url,
+                    ytUrl: query,
+                    duration: ytInfo.video_details.durationRaw || 'N/A',
+                    thumbnail: ytInfo.video_details.thumbnails[0]?.url || scMatch[0].thumbnail || null,
+                    source: 'soundcloud',
+                    raw: ytInfo
+                };
+            }
+
             return {
-                title: ytInfo.video_details.title || 'YouTube Track',
-                url: ytInfo.video_details.url,
+                title: title,
+                url: query,
                 duration: ytInfo.video_details.durationRaw || 'N/A',
                 thumbnail: ytInfo.video_details.thumbnails[0]?.url || null,
                 source: 'youtube',
