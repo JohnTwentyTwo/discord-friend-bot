@@ -37,6 +37,7 @@ const db = require('./db');
 const { renderTaiXiuResultImage, renderSoiCauChart, generateTaiXiuAnimationGif } = require('./dice_renderer');
 const { renderLeaderboardImage } = require('./leaderboard_renderer');
 const { handleWordChainMessage, getWordChainState } = require('./word_chain');
+const musicPlayer = require('./music_player');
 
 // GuildMembers cần bật Privileged Intent trên Discord Developer Portal:
 // https://discord.com/developers/applications/1547186053696327811/bot
@@ -337,7 +338,30 @@ const commands = [
     new SlashCommandBuilder()
         .setName('lich-su-vi-pham')
         .setDescription('Tra cứu hồ sơ vi phạm và các án phạt của một thành viên')
-        .addUserOption(opt => opt.setName('user').setDescription('Thành viên cần tra cứu').setRequired(true))
+        .addUserOption(opt => opt.setName('user').setDescription('Thành viên cần tra cứu').setRequired(true)),
+    // --- NHÓM LỆNH PHÁT NHẠC ---
+    new SlashCommandBuilder()
+        .setName('play')
+        .setDescription('Phát bài hát từ SoundCloud hoặc YouTube vào phòng voice')
+        .addStringOption(opt => opt.setName('bai_hat').setDescription('Tên bài hát hoặc link YouTube/SoundCloud').setRequired(true)),
+    new SlashCommandBuilder()
+        .setName('skip')
+        .setDescription('Bỏ qua bài hát đang phát để chuyển sang bài tiếp theo'),
+    new SlashCommandBuilder()
+        .setName('stop')
+        .setDescription('Dừng phát nhạc, xóa hàng đợi và rời phòng voice'),
+    new SlashCommandBuilder()
+        .setName('pause')
+        .setDescription('Tạm dừng bài hát đang phát'),
+    new SlashCommandBuilder()
+        .setName('resume')
+        .setDescription('Tiếp tục phát bài hát đang tạm dừng'),
+    new SlashCommandBuilder()
+        .setName('queue')
+        .setDescription('Xem danh sách các bài hát đang chờ phát'),
+    new SlashCommandBuilder()
+        .setName('nowplaying')
+        .setDescription('Xem thông tin bài hát đang phát hiện tại')
 ];
 
 const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
@@ -1875,6 +1899,70 @@ client.on('interactionCreate', async (interaction) => {
             }
 
             // ==========================================
+            // LỆNH PHÁT NHẠC (MUSIC PLAYER)
+            // ==========================================
+            if (commandName === 'play') {
+                const query = interaction.options.getString('bai_hat');
+                return musicPlayer.handlePlayCommand(interaction, query);
+            }
+
+            if (commandName === 'skip') {
+                const res = musicPlayer.handleSkipCommand(interaction.guild.id);
+                return interaction.reply({ content: res.message });
+            }
+
+            if (commandName === 'stop') {
+                const res = musicPlayer.handleStopCommand(interaction.guild.id);
+                return interaction.reply({ content: res.message });
+            }
+
+            if (commandName === 'pause') {
+                const res = musicPlayer.handlePauseResumeCommand(interaction.guild.id, 'pause');
+                return interaction.reply({ content: res.message });
+            }
+
+            if (commandName === 'resume') {
+                const res = musicPlayer.handlePauseResumeCommand(interaction.guild.id, 'resume');
+                return interaction.reply({ content: res.message });
+            }
+
+            if (commandName === 'queue') {
+                const qInfo = musicPlayer.getQueueInfo(interaction.guild.id);
+                if (!qInfo) {
+                    return interaction.reply({ content: '> 📭 Hàng đợi bài hát hiện đang trống!', ephemeral: true });
+                }
+                const curStr = qInfo.current ? `🎶 **Đang phát:** [${qInfo.current.title}](${qInfo.current.url}) (\`${qInfo.current.duration}\`)\n\n` : '';
+                const upcoming = qInfo.songs.slice(0, 10).map((s, idx) => `**#${idx + 1}.** [${s.title}](${s.url}) — \`${s.duration}\` (bởi <@${s.requesterId}>)`).join('\n');
+                const footerText = qInfo.songs.length > 10 ? `\n\n... và còn ${qInfo.songs.length - 10} bài khác.` : '';
+                
+                const qEmbed = new EmbedBuilder()
+                    .setColor(0x1DB954)
+                    .setTitle(`📋 HÀNG ĐỢI PHÁT NHẠC (${qInfo.totalSongs} bài)`)
+                    .setDescription(`${curStr}**Bài hát tiếp theo:**\n${upcoming || '*(Không có)*'}${footerText}`)
+                    .setFooter({ text: 'Dùng /skip để chuyển bài tiếp theo, /stop để dừng phát.' });
+                return interaction.reply({ embeds: [qEmbed] });
+            }
+
+            if (commandName === 'nowplaying') {
+                const qInfo = musicPlayer.getQueueInfo(interaction.guild.id);
+                if (!qInfo || !qInfo.current) {
+                    return interaction.reply({ content: '> Hiện không có bài hát nào đang phát!', ephemeral: true });
+                }
+                const s = qInfo.current;
+                const npEmbed = new EmbedBuilder()
+                    .setColor(0x1DB954)
+                    .setTitle(`🎶 Đang phát: ${s.title}`)
+                    .setURL(s.url)
+                    .addFields(
+                        { name: '⏱️ Thời lượng', value: `\`${s.duration}\``, inline: true },
+                        { name: '🌐 Nguồn', value: s.source === 'soundcloud' ? 'SoundCloud 🟠' : 'YouTube 🔴', inline: true },
+                        { name: '👤 Người yêu cầu', value: `<@${s.requesterId}>`, inline: true }
+                    );
+                if (s.thumbnail) npEmbed.setThumbnail(s.thumbnail);
+                return interaction.reply({ embeds: [npEmbed] });
+            }
+
+            // ==========================================
             // LỆNH QUẢN TRỊ SERVER CŨ
             // ==========================================
             if (commandName === 'setup-ticket') {
@@ -3190,13 +3278,88 @@ client.on('messageCreate', async (message) => {
                     `• \`.xephang\` (hoặc \`.bxh\`, \`.top-xu\`): Render ảnh Top 10 đại gia & biến động ăn/thua\n\n` +
                     `▎ **TIỆN ÍCH KHÁC**\n` +
                     `• \`.rank [@user]\`: Thẻ thành viên (Level, XP, Chat, Voice)\n` +
+                    `• \`.play [tên bài/link]\`: Phát nhạc SoundCloud/YouTube vào voice\n` +
+                    `• \`.skip\` / \`.stop\` / \`.pause\` / \`.resume\`: Điều khiển nhạc\n` +
+                    `• \`.queue\` / \`.np\`: Xem hàng đợi / bài hát đang phát\n` +
                     `• \`.tts [nội dung]\`: Đọc giọng chị Google vào voice\n` +
                     `• \`.join\` / \`.leave\`: Mời / cho bot rời phòng voice\n` +
                     `• \`.clear [số lượng]\`: Xóa nhanh tin nhắn (Mod/Admin)`
                 )
-                .setFooter({ text: 'Gõ .tx, .bc, .sc, .noitu cực kỳ nhanh gọn!' });
+                .setFooter({ text: 'Gõ .play [tên bài] để thưởng thức âm nhạc đỉnh cao!' });
 
             return message.reply({ embeds: [embed] });
+        }
+
+        // --- NHÓM LỆNH PHÁT NHẠC (MUSIC PLAYER) ---
+        // 17. Lệnh .play / .p / .nhac
+        if (cmd === 'play' || cmd === 'p' || cmd === 'nhac') {
+            const query = args.join(' ');
+            if (!query) {
+                return message.reply('> Vui lòng nhập tên bài hát hoặc link! (VD: `.play Sơn Tùng Lạc Trôi` hoặc `.p https://...`)');
+            }
+            return musicPlayer.handlePlayCommand(message, query);
+        }
+
+        // 18. Lệnh .skip / .s
+        if (cmd === 'skip' || cmd === 's') {
+            const res = musicPlayer.handleSkipCommand(message.guild.id);
+            return message.reply(res.message);
+        }
+
+        // 19. Lệnh .stop
+        if (cmd === 'stop') {
+            const res = musicPlayer.handleStopCommand(message.guild.id);
+            return message.reply(res.message);
+        }
+
+        // 20. Lệnh .pause
+        if (cmd === 'pause') {
+            const res = musicPlayer.handlePauseResumeCommand(message.guild.id, 'pause');
+            return message.reply(res.message);
+        }
+
+        // 21. Lệnh .resume
+        if (cmd === 'resume') {
+            const res = musicPlayer.handlePauseResumeCommand(message.guild.id, 'resume');
+            return message.reply(res.message);
+        }
+
+        // 22. Lệnh .queue / .q
+        if (cmd === 'queue' || cmd === 'q') {
+            const qInfo = musicPlayer.getQueueInfo(message.guild.id);
+            if (!qInfo) {
+                return message.reply('> 📭 Hàng đợi bài hát hiện đang trống!');
+            }
+            const curStr = qInfo.current ? `🎶 **Đang phát:** [${qInfo.current.title}](${qInfo.current.url}) (\`${qInfo.current.duration}\`)\n\n` : '';
+            const upcoming = qInfo.songs.slice(0, 10).map((s, idx) => `**#${idx + 1}.** [${s.title}](${s.url}) — \`${s.duration}\` (bởi <@${s.requesterId}>)`).join('\n');
+            const footerText = qInfo.songs.length > 10 ? `\n\n... và còn ${qInfo.songs.length - 10} bài khác.` : '';
+            
+            const qEmbed = new EmbedBuilder()
+                .setColor(0x1DB954)
+                .setTitle(`📋 HÀNG ĐỢI PHÁT NHẠC (${qInfo.totalSongs} bài)`)
+                .setDescription(`${curStr}**Bài hát tiếp theo:**\n${upcoming || '*(Không có)*'}${footerText}`)
+                .setFooter({ text: 'Dùng .skip để chuyển bài tiếp theo, .stop để dừng phát.' });
+            return message.reply({ embeds: [qEmbed] });
+        }
+
+        // 23. Lệnh .nowplaying / .np
+        if (cmd === 'nowplaying' || cmd === 'np') {
+            const qInfo = musicPlayer.getQueueInfo(message.guild.id);
+            if (!qInfo || !qInfo.current) {
+                return message.reply('> Hiện không có bài hát nào đang phát!');
+            }
+            const s = qInfo.current;
+            const npEmbed = new EmbedBuilder()
+                .setColor(0x1DB954)
+                .setTitle(`🎶 Đang phát: ${s.title}`)
+                .setURL(s.url)
+                .addFields(
+                    { name: '⏱️ Thời lượng', value: `\`${s.duration}\``, inline: true },
+                    { name: '🌐 Nguồn', value: s.source === 'soundcloud' ? 'SoundCloud 🟠' : 'YouTube 🔴', inline: true },
+                    { name: '👤 Người yêu cầu', value: `<@${s.requesterId}>`, inline: true }
+                );
+            if (s.thumbnail) npEmbed.setThumbnail(s.thumbnail);
+            return message.reply({ embeds: [npEmbed] });
         }
     }
 
