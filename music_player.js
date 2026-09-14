@@ -66,7 +66,7 @@ initTokens();
  * @param {string} query Tên bài hoặc link
  */
 async function searchTrack(query) {
-    await initSoundCloud();
+    await initTokens();
     // 0. Làm sạch Query nếu là link YouTube dính kèm tham số playlist/radio
     let cleanQuery = query.trim();
     if (cleanQuery.includes('youtube.com/watch') || cleanQuery.includes('youtu.be/')) {
