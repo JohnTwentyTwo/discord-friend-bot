@@ -2871,7 +2871,10 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
 client.on('messageCreate', async (message) => {
     if (!message.guild || message.author.bot) return;
 
-    const { member, channel, guild, content } = message;
+    let { member, channel, guild, content } = message;
+    if (!member && guild) {
+        member = await guild.members.fetch(message.author.id).catch(() => null);
+    }
     if (!member) return;
 
     // Xử lý game Nối Từ nếu người dùng chat trong phòng ❖-nối-từ
@@ -3297,7 +3300,10 @@ client.on('messageCreate', async (message) => {
             if (!query) {
                 return message.reply('> Vui lòng nhập tên bài hát hoặc link! (VD: `.play Sơn Tùng Lạc Trôi` hoặc `.p https://...`)');
             }
-            return musicPlayer.handlePlayCommand(message, query);
+            return musicPlayer.handlePlayCommand(message, query).catch(err => {
+                console.error('[PLAY ERROR]', err);
+                message.reply(`❌ Không thể phát nhạc: ${err.message}`).catch(() => {});
+            });
         }
 
         // 18. Lệnh .skip / .s
