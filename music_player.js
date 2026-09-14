@@ -449,5 +449,5 @@ module.exports = {
     handleStopCommand,
     handlePauseResumeCommand,
     getQueueInfo,
-    initYouTubeCookie
+    initTokens
 };
