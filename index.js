@@ -79,6 +79,9 @@ const guildPlayers = new Map();
 // Cache timeout tự động rời phòng sau khi phát xong TTS (guildId -> timeout)
 const ttsLeaveTimeouts = new Map();
 
+// Cache theo dõi tin nhắn chống Spam / Flood (userId -> [timestamps])
+const spamTracker = new Map();
+
 // Cache lưu trữ các phòng game cược cộng đồng đang diễn ra (messageId -> room)
 const activeGameRooms = new Map();
 // Khóa đơn phiên Tài Xỉu (Chỉ cho phép duy nhất 1 phiên hoạt động cùng lúc trên server)
@@ -149,30 +152,7 @@ const commands = [
                 .setMinValue(1)
                 .setMaxValue(100))
         .setDefaultMemberPermissions(PermissionsBitField.Flags.ManageMessages),
-    new SlashCommandBuilder()
-        .setName('timeout')
-        .setDescription('Tạm thời cấm chat thành viên vi phạm (Chỉ Mod/Admin)')
-        .addUserOption(opt => opt.setName('user').setDescription('Thành viên cần xử lý').setRequired(true))
-        .addIntegerOption(opt => 
-            opt.setName('minutes')
-                .setDescription('Thời gian cấm chat (phút)')
-                .setRequired(true)
-                .setMinValue(1)
-                .setMaxValue(10080))
-        .addStringOption(opt => opt.setName('reason').setDescription('Lý do vi phạm').setRequired(false))
-        .setDefaultMemberPermissions(PermissionsBitField.Flags.ModerateMembers),
-    new SlashCommandBuilder()
-        .setName('kick')
-        .setDescription('Kick thành viên ra khỏi server (Chỉ Admin/Mod)')
-        .addUserOption(opt => opt.setName('user').setDescription('Thành viên cần kick').setRequired(true))
-        .addStringOption(opt => opt.setName('reason').setDescription('Lý do').setRequired(false))
-        .setDefaultMemberPermissions(PermissionsBitField.Flags.KickMembers),
-    new SlashCommandBuilder()
-        .setName('ban')
-        .setDescription('Ban vĩnh viễn thành viên khỏi server (Chỉ Admin)')
-        .addUserOption(opt => opt.setName('user').setDescription('Thành viên cần ban').setRequired(true))
-        .addStringOption(opt => opt.setName('reason').setDescription('Lý do ban').setRequired(false))
-        .setDefaultMemberPermissions(PermissionsBitField.Flags.BanMembers),
+
     new SlashCommandBuilder()
         .setName('server-info')
         .setDescription('Xem tổng quan thông tin và thống kê server'),

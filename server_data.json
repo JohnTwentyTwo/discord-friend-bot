@@ -1,38 +1,38 @@
 {
   "users": {
     "548114386787762178": {
-      "coins": 5852786332,
+      "coins": 7968927890,
+      "xp": 4777,
+      "level": 7,
+      "messages": 64,
+      "voiceTime": 45668,
       "lastDaily": 0,
-      "xp": 381,
-      "level": 2,
-      "messages": 19,
-      "voiceTime": 99,
       "recentGame": {
-        "net": -50000000,
+        "net": 2180818117,
         "game": "Tài Xỉu",
-        "timestamp": 1789019456900
+        "timestamp": 1789664672164
       }
     },
     "874583735054528532": {
-      "coins": 9999998000,
+      "coins": 8999998000,
+      "xp": 33878,
+      "level": 24,
+      "messages": 228,
+      "voiceTime": 374757,
       "lastDaily": 0,
-      "xp": 1022,
-      "level": 6,
-      "messages": 53,
-      "voiceTime": 11,
       "recentGame": {
-        "net": 150000000,
+        "net": -1000000000,
         "game": "Tài Xỉu",
-        "timestamp": 1789019456899
+        "timestamp": 1789127891761
       }
     },
     "1547186053696327811": {
       "coins": 50000,
-      "lastDaily": 0,
       "xp": 0,
       "level": 1,
       "messages": 0,
       "voiceTime": 0,
+      "lastDaily": 0,
       "recentGame": {
         "net": -10000,
         "game": "Tài Xỉu",
@@ -41,11 +41,11 @@
     },
     "920598271389495347": {
       "coins": 900,
-      "lastDaily": 0,
       "xp": 0,
       "level": 1,
       "messages": 0,
       "voiceTime": 0,
+      "lastDaily": 0,
       "recentGame": {
         "net": 300,
         "game": "Tài Xỉu",
@@ -53,12 +53,12 @@
       }
     },
     "642229607101104129": {
-      "coins": 9003725400,
+      "coins": 9003755400,
+      "xp": 22093,
+      "level": 8,
+      "messages": 49,
+      "voiceTime": 254332,
       "lastDaily": 0,
-      "xp": 198,
-      "level": 1,
-      "messages": 10,
-      "voiceTime": 0,
       "recentGame": {
         "net": 85000000,
         "game": "Tài Xỉu",
@@ -67,345 +67,927 @@
     },
     "830708268292243486": {
       "coins": 0,
-      "lastDaily": 0,
-      "xp": 20,
+      "xp": 25,
       "level": 1,
       "messages": 0,
-      "voiceTime": 243
+      "voiceTime": 356,
+      "lastDaily": 0,
+      "recentGame": null
     },
     "614771187523911715": {
       "coins": 0,
+      "xp": 4102,
+      "level": 3,
+      "messages": 2,
+      "voiceTime": 48926,
       "lastDaily": 0,
-      "xp": 0,
-      "level": 1,
-      "messages": 0,
-      "voiceTime": 8
+      "recentGame": null
     },
     "1134820683558441021": {
       "coins": 0,
-      "lastDaily": 0,
-      "xp": 0,
+      "xp": 360,
       "level": 1,
       "messages": 0,
-      "voiceTime": 20
+      "voiceTime": 4424,
+      "lastDaily": 0,
+      "recentGame": null
     },
     "731502168598904882": {
       "coins": 0,
+      "xp": 9944,
+      "level": 12,
+      "messages": 54,
+      "voiceTime": 108629,
       "lastDaily": 0,
-      "xp": 97,
-      "level": 1,
-      "messages": 5,
-      "voiceTime": 0
+      "recentGame": null
     },
     "992051971412463636": {
       "coins": 0,
+      "xp": 1550,
+      "level": 3,
+      "messages": 56,
+      "voiceTime": 11727,
       "lastDaily": 0,
-      "xp": 35,
-      "level": 1,
-      "messages": 2,
-      "voiceTime": 0
+      "recentGame": null
     },
     "926366937599049818": {
       "coins": 1000000000,
+      "xp": 2233,
+      "level": 7,
+      "messages": 53,
+      "voiceTime": 17276,
       "lastDaily": 0,
-      "xp": 661,
-      "level": 4,
-      "messages": 34,
-      "voiceTime": 0,
       "recentGame": {
         "net": 20000000,
         "game": "Bầu Cua",
         "timestamp": 1789019456900
       }
+    },
+    "687212073163423756": {
+      "coins": 0,
+      "xp": 520,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 6273,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1004382375670730814": {
+      "coins": 0,
+      "xp": 1307,
+      "level": 3,
+      "messages": 2,
+      "voiceTime": 15598,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "996183766668156965": {
+      "coins": 0,
+      "xp": 972,
+      "level": 1,
+      "messages": 1,
+      "voiceTime": 11620,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1363555507100717178": {
+      "coins": 0,
+      "xp": 8616,
+      "level": 16,
+      "messages": 68,
+      "voiceTime": 94620,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1261182656062951465": {
+      "coins": 0,
+      "xp": 517,
+      "level": 3,
+      "messages": 22,
+      "voiceTime": 1007,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1256565516412260352": {
+      "coins": 4000,
+      "xp": 1941,
+      "level": 2,
+      "messages": 4,
+      "voiceTime": 23231,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "967369386220458074": {
+      "coins": 0,
+      "xp": 7079,
+      "level": 18,
+      "messages": 63,
+      "voiceTime": 76100,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "482521491884212264": {
+      "coins": 4000,
+      "xp": 1045,
+      "level": 2,
+      "messages": 0,
+      "voiceTime": 12706,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1089597811026305144": {
+      "coins": 4000,
+      "xp": 1273,
+      "level": 2,
+      "messages": 1,
+      "voiceTime": 15226,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1204286271493636147": {
+      "coins": 0,
+      "xp": 274,
+      "level": 1,
+      "messages": 1,
+      "voiceTime": 3088,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "873051112092086302": {
+      "coins": 0,
+      "xp": 135,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 1720,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "649236105144696851": {
+      "coins": 0,
+      "xp": 807,
+      "level": 1,
+      "messages": 2,
+      "voiceTime": 9658,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "870688050244620370": {
+      "coins": 0,
+      "xp": 3378,
+      "level": 6,
+      "messages": 34,
+      "voiceTime": 35937,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "602356469479768065": {
+      "coins": 0,
+      "xp": 348,
+      "level": 2,
+      "messages": 4,
+      "voiceTime": 3418,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "982978491169525761": {
+      "coins": 0,
+      "xp": 17,
+      "level": 1,
+      "messages": 2,
+      "voiceTime": 62,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "694041518302036049": {
+      "coins": 0,
+      "xp": 10,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 222,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1387023913296330772": {
+      "coins": 0,
+      "xp": 644,
+      "level": 1,
+      "messages": 17,
+      "voiceTime": 6566,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "915842088199942174": {
+      "coins": 0,
+      "xp": 309,
+      "level": 1,
+      "messages": 7,
+      "voiceTime": 2321,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1333705693072461858": {
+      "coins": 999899000,
+      "xp": 542,
+      "level": 3,
+      "messages": 29,
+      "voiceTime": 0,
+      "lastDaily": 0,
+      "recentGame": {
+        "net": 100000,
+        "game": "Bầu Cua",
+        "timestamp": 1789253263830
+      }
+    },
+    "1107356572293804072": {
+      "coins": 0,
+      "xp": 0,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 26,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1453456654409531505": {
+      "coins": 0,
+      "xp": 0,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 51,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1316803715562340382": {
+      "coins": 0,
+      "xp": 220,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 2712,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1020626300618162228": {
+      "coins": 0,
+      "xp": 405,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 4867,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "710508899341434930": {
+      "coins": 4000,
+      "xp": 2020,
+      "level": 2,
+      "messages": 0,
+      "voiceTime": 24310,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1489292807284854814": {
+      "coins": 4000,
+      "xp": 1765,
+      "level": 2,
+      "messages": 0,
+      "voiceTime": 21275,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1357982850955346113": {
+      "coins": 4000,
+      "xp": 2060,
+      "level": 2,
+      "messages": 0,
+      "voiceTime": 24918,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "599555183311192066": {
+      "coins": 4000,
+      "xp": 2158,
+      "level": 2,
+      "messages": 9,
+      "voiceTime": 24490,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1001663532607213628": {
+      "coins": 4000,
+      "xp": 1115,
+      "level": 2,
+      "messages": 0,
+      "voiceTime": 13441,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "698148397688946698": {
+      "coins": 0,
+      "xp": 450,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 5488,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1508017981139976222": {
+      "coins": 0,
+      "xp": 964,
+      "level": 1,
+      "messages": 1,
+      "voiceTime": 11343,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1371387332175073332": {
+      "coins": 10000,
+      "xp": 3705,
+      "level": 3,
+      "messages": 0,
+      "voiceTime": 44707,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "871604674917204050": {
+      "coins": 0,
+      "xp": 15,
+      "level": 1,
+      "messages": 1,
+      "voiceTime": 0,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1118332918851440700": {
+      "coins": 0,
+      "xp": 41,
+      "level": 1,
+      "messages": 4,
+      "voiceTime": 0,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1269265554917687316": {
+      "coins": 0,
+      "xp": 0,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 5,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "871665702514335765": {
+      "coins": 0,
+      "xp": 0,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 43,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1419210291031572527": {
+      "coins": 0,
+      "xp": 60,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 779,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1235201446509547614": {
+      "coins": 0,
+      "xp": 575,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 6959,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "451688777048391683": {
+      "coins": 0,
+      "xp": 315,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 3842,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1364533589223669811": {
+      "coins": 0,
+      "xp": 140,
+      "level": 1,
+      "messages": 1,
+      "voiceTime": 1522,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1212988002918469664": {
+      "coins": 0,
+      "xp": 395,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 4790,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "952918299967119501": {
+      "coins": 0,
+      "xp": 505,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 6086,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "504609246483185664": {
+      "coins": 0,
+      "xp": 50,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 645,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "688681283383197731": {
+      "coins": 0,
+      "xp": 16,
+      "level": 1,
+      "messages": 3,
+      "voiceTime": 0,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1136490726021152859": {
+      "coins": 0,
+      "xp": 465,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 5649,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "848090623839961089": {
+      "coins": 0,
+      "xp": 25,
+      "level": 1,
+      "messages": 2,
+      "voiceTime": 0,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "991232217110036551": {
+      "coins": 0,
+      "xp": 78,
+      "level": 1,
+      "messages": 2,
+      "voiceTime": 802,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1550475918760222766": {
+      "coins": 0,
+      "xp": 175,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 2155,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "425129615783362571": {
+      "coins": 0,
+      "xp": 575,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 6937,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1096018245229748275": {
+      "coins": 0,
+      "xp": 60,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 751,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1405236765505228833": {
+      "coins": 0,
+      "xp": 17,
+      "level": 1,
+      "messages": 1,
+      "voiceTime": 0,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "761876373950038016": {
+      "coins": 0,
+      "xp": 24,
+      "level": 1,
+      "messages": 1,
+      "voiceTime": 0,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "756117614085800066": {
+      "coins": 0,
+      "xp": 45,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 582,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "503367601569923072": {
+      "coins": 0,
+      "xp": 555,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 6719,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "765642957084164107": {
+      "coins": 0,
+      "xp": 205,
+      "level": 1,
+      "messages": 0,
+      "voiceTime": 2488,
+      "lastDaily": 0,
+      "recentGame": null
+    },
+    "1189780456716120134": {
+      "coins": 0,
+      "lastDaily": 0,
+      "xp": 25,
+      "level": 1,
+      "messages": 1,
+      "voiceTime": 0,
+      "recentGame": null
     }
   },
   "giveaways": {},
-  "jackpot": 3669345755,
-  "txRoundId": 67433,
+  "jackpot": 3860002915,
+  "txRoundId": 67441,
   "txHistory": [
     {
+      "roundId": 67401,
+      "d1": null,
+      "d2": null,
+      "d3": null,
       "total": 8,
       "isTai": false,
       "isChan": true
     },
     {
+      "roundId": 67402,
+      "d1": null,
+      "d2": null,
+      "d3": null,
       "total": 10,
       "isTai": false,
       "isChan": true
     },
     {
+      "roundId": 67403,
+      "d1": null,
+      "d2": null,
+      "d3": null,
       "total": 13,
       "isTai": true,
       "isChan": false
     },
     {
+      "roundId": 67404,
+      "d1": null,
+      "d2": null,
+      "d3": null,
       "total": 15,
       "isTai": true,
       "isChan": false
     },
     {
+      "roundId": 67405,
+      "d1": null,
+      "d2": null,
+      "d3": null,
       "total": 11,
       "isTai": true,
       "isChan": false
     },
     {
+      "roundId": 67406,
+      "d1": null,
+      "d2": null,
+      "d3": null,
       "total": 6,
       "isTai": false,
       "isChan": true
     },
     {
+      "roundId": 67407,
+      "d1": null,
+      "d2": null,
+      "d3": null,
       "total": 7,
       "isTai": false,
       "isChan": false
     },
     {
+      "roundId": 67408,
+      "d1": null,
+      "d2": null,
+      "d3": null,
       "total": 14,
       "isTai": true,
       "isChan": true
     },
     {
+      "roundId": 67409,
+      "d1": null,
+      "d2": null,
+      "d3": null,
       "total": 12,
       "isTai": true,
       "isChan": true
     },
     {
+      "roundId": 67410,
+      "d1": null,
+      "d2": null,
+      "d3": null,
       "total": 11,
       "isTai": true,
       "isChan": false
     },
     {
+      "roundId": 67411,
+      "d1": null,
+      "d2": null,
+      "d3": null,
       "total": 14,
       "isTai": true,
       "isChan": true
     },
     {
+      "roundId": 67412,
+      "d1": null,
+      "d2": null,
+      "d3": null,
       "total": 9,
       "isTai": false,
       "isChan": false
     },
     {
+      "roundId": 67413,
+      "d1": null,
+      "d2": null,
+      "d3": null,
       "total": 12,
       "isTai": true,
       "isChan": true
     },
     {
+      "roundId": 67414,
+      "d1": null,
+      "d2": null,
+      "d3": null,
       "total": 16,
       "isTai": true,
       "isChan": true
     },
     {
+      "roundId": 67415,
+      "d1": null,
+      "d2": null,
+      "d3": null,
       "total": 5,
       "isTai": false,
       "isChan": false
     },
     {
+      "roundId": 67416,
+      "d1": null,
+      "d2": null,
+      "d3": null,
       "total": 8,
       "isTai": false,
       "isChan": true
     },
     {
+      "roundId": 67417,
+      "d1": null,
+      "d2": null,
+      "d3": null,
       "total": 13,
       "isTai": true,
       "isChan": false
-    },
-    {
-      "total": 7,
-      "isTai": false,
-      "isChan": false
-    },
-    {
-      "total": 9,
-      "isTai": false,
-      "isChan": false
-    },
-    {
-      "total": 6,
-      "isTai": false,
-      "isChan": true
-    },
-    {
-      "total": 6,
-      "isTai": false,
-      "isChan": true,
-      "d1": 1,
-      "d2": 2,
-      "d3": 3
-    },
-    {
-      "total": 11,
-      "isTai": true,
-      "isChan": false,
-      "d1": 2,
-      "d2": 6,
-      "d3": 3
-    },
-    {
-      "total": 8,
-      "isTai": false,
-      "isChan": true,
-      "d1": 2,
-      "d2": 1,
-      "d3": 5
-    },
-    {
-      "total": 14,
-      "isTai": true,
-      "isChan": true,
-      "d1": 6,
-      "d2": 2,
-      "d3": 6
-    },
-    {
-      "total": 10,
-      "isTai": false,
-      "isChan": true,
-      "d1": 2,
-      "d2": 5,
-      "d3": 3
-    },
-    {
-      "total": 9,
-      "isTai": false,
-      "isChan": false,
-      "d1": 2,
-      "d2": 6,
-      "d3": 1
     },
     {
       "roundId": 67418,
-      "total": 9,
-      "isTai": false,
-      "isChan": false,
       "d1": 1,
       "d2": 5,
-      "d3": 3
+      "d3": 3,
+      "total": 9,
+      "isTai": false,
+      "isChan": false
     },
     {
       "roundId": 67419,
-      "total": 15,
-      "isTai": true,
-      "isChan": false,
       "d1": 4,
       "d2": 5,
-      "d3": 6
+      "d3": 6,
+      "total": 15,
+      "isTai": true,
+      "isChan": false
     },
     {
       "roundId": 67420,
-      "total": 11,
-      "isTai": true,
-      "isChan": false,
       "d1": 4,
       "d2": 3,
-      "d3": 4
+      "d3": 4,
+      "total": 11,
+      "isTai": true,
+      "isChan": false
     },
     {
       "roundId": 67421,
-      "total": 11,
-      "isTai": true,
-      "isChan": false,
       "d1": 2,
       "d2": 3,
-      "d3": 6
+      "d3": 6,
+      "total": 11,
+      "isTai": true,
+      "isChan": false
     },
     {
       "roundId": 67422,
-      "total": 14,
-      "isTai": true,
-      "isChan": true,
       "d1": 4,
       "d2": 6,
-      "d3": 4
+      "d3": 4,
+      "total": 14,
+      "isTai": true,
+      "isChan": true
     },
     {
       "roundId": 67423,
-      "total": 7,
-      "isTai": false,
-      "isChan": false,
       "d1": 3,
       "d2": 2,
-      "d3": 2
+      "d3": 2,
+      "total": 7,
+      "isTai": false,
+      "isChan": false
     },
     {
       "roundId": 67424,
-      "total": 14,
-      "isTai": true,
-      "isChan": true,
       "d1": 6,
       "d2": 5,
-      "d3": 3
+      "d3": 3,
+      "total": 14,
+      "isTai": true,
+      "isChan": true
     },
     {
       "roundId": 67425,
-      "total": 13,
-      "isTai": true,
-      "isChan": false,
       "d1": 5,
       "d2": 4,
-      "d3": 4
+      "d3": 4,
+      "total": 13,
+      "isTai": true,
+      "isChan": false
     },
     {
       "roundId": 67426,
-      "total": 5,
-      "isTai": false,
-      "isChan": false,
       "d1": 1,
       "d2": 2,
-      "d3": 2
+      "d3": 2,
+      "total": 5,
+      "isTai": false,
+      "isChan": false
     },
     {
       "roundId": 67427,
-      "total": 15,
-      "isTai": true,
-      "isChan": false,
       "d1": 6,
       "d2": 3,
-      "d3": 6
+      "d3": 6,
+      "total": 15,
+      "isTai": true,
+      "isChan": false
     },
     {
       "roundId": 67428,
-      "total": 12,
-      "isTai": true,
-      "isChan": true,
       "d1": 6,
       "d2": 4,
-      "d3": 2
+      "d3": 2,
+      "total": 12,
+      "isTai": true,
+      "isChan": true
     },
     {
       "roundId": 67429,
-      "total": 7,
-      "isTai": false,
-      "isChan": false,
       "d1": 1,
       "d2": 4,
-      "d3": 2
+      "d3": 2,
+      "total": 7,
+      "isTai": false,
+      "isChan": false
     },
     {
       "roundId": 67430,
-      "total": 10,
-      "isTai": false,
-      "isChan": true,
       "d1": 3,
       "d2": 1,
-      "d3": 6
+      "d3": 6,
+      "total": 10,
+      "isTai": false,
+      "isChan": true
     },
     {
       "roundId": 67431,
-      "total": 11,
-      "isTai": true,
-      "isChan": false,
       "d1": 6,
       "d2": 1,
-      "d3": 4
+      "d3": 4,
+      "total": 11,
+      "isTai": true,
+      "isChan": false
     },
     {
       "roundId": 67432,
-      "total": 9,
-      "isTai": false,
-      "isChan": false,
       "d1": 5,
       "d2": 3,
-      "d3": 1
+      "d3": 1,
+      "total": 9,
+      "isTai": false,
+      "isChan": false
+    },
+    {
+      "roundId": 67433,
+      "d1": 1,
+      "d2": 6,
+      "d3": 4,
+      "total": 11,
+      "isTai": true,
+      "isChan": false
+    },
+    {
+      "roundId": 67434,
+      "d1": 5,
+      "d2": 2,
+      "d3": 6,
+      "total": 13,
+      "isTai": true,
+      "isChan": false
+    },
+    {
+      "roundId": 67435,
+      "d1": 2,
+      "d2": 1,
+      "d3": 6,
+      "total": 9,
+      "isTai": false,
+      "isChan": false
+    },
+    {
+      "roundId": 67436,
+      "d1": 5,
+      "d2": 1,
+      "d3": 3,
+      "total": 9,
+      "isTai": false,
+      "isChan": false
+    },
+    {
+      "roundId": 67437,
+      "d1": 6,
+      "d2": 1,
+      "d3": 2,
+      "total": 9,
+      "isTai": false,
+      "isChan": false
+    },
+    {
+      "roundId": 67438,
+      "d1": 5,
+      "d2": 5,
+      "d3": 1,
+      "total": 11,
+      "isTai": true,
+      "isChan": false
+    },
+    {
+      "roundId": 67439,
+      "d1": 6,
+      "d2": 1,
+      "d3": 2,
+      "total": 9,
+      "isTai": false,
+      "isChan": false
+    },
+    {
+      "roundId": 67440,
+      "d1": 5,
+      "d2": 4,
+      "d3": 6,
+      "total": 15,
+      "isTai": true,
+      "isChan": false
     }
   ],
-  "modLogs": []
+  "modLogs": [],
+  "wordChain": null
 }
