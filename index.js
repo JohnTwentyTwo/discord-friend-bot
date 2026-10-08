@@ -3641,6 +3641,14 @@ http.createServer((req, res) => {
         res.end(logHistory.join('\n'));
         return;
     }
+    if (req.url === '/ping-discord') {
+        const https = require('https');
+        https.get('https://discord.com/api/v10/gateway', r => {
+            let d = ''; r.on('data', c => d+=c);
+            r.on('end', () => { res.writeHead(200); res.end(`Status: ${r.statusCode}\nData: ${d}`); });
+        }).on('error', e => { res.writeHead(500); res.end(e.message); });
+        return;
+    }
     res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
     res.end('Bot Discord Online 24/7!');
 }).listen(PORT, () => {
