@@ -3045,7 +3045,7 @@ client.on('messageCreate', async (message) => {
 
         // 5. Lệnh .top-xu / .topxu / .top
         // 5. Lệnh .xephang / .bxh / .top-xu / .topxu / .top
-        if (cmd === 'xephang' || cmd === 'bxh' || cmd === 'top-xu' || cmd === 'topxu' || cmd === 'top' || cmd === 'leaderboard') {
+        if (cmd === 'xephang' || cmd === 'bangxephang' || cmd === 'bxh' || cmd === 'top-xu' || cmd === 'topxu' || cmd === 'top' || cmd === 'leaderboard') {
             const topUsers = db.getTopUsers('coins', 10);
             const enrichedUsers = await Promise.all(topUsers.map(async (u) => {
                 let member = message.guild?.members.cache.get(u.id);
@@ -3625,7 +3625,22 @@ process.on('uncaughtException', err => {
 // Web Healthcheck Server cho Render/Cloud Hosting
 const http = require('http');
 const PORT = process.env.PORT || 3000;
+
+// Log interceptor
+const logHistory = [];
+const originalLog = console.log;
+const originalError = console.error;
+const originalWarn = console.warn;
+console.log = function(...args) { logHistory.push(`[INFO] ${args.join(' ')}`); if(logHistory.length > 200) logHistory.shift(); originalLog.apply(console, args); };
+console.error = function(...args) { logHistory.push(`[ERROR] ${args.join(' ')}`); if(logHistory.length > 200) logHistory.shift(); originalError.apply(console, args); };
+console.warn = function(...args) { logHistory.push(`[WARN] ${args.join(' ')}`); if(logHistory.length > 200) logHistory.shift(); originalWarn.apply(console, args); };
+
 http.createServer((req, res) => {
+    if (req.url === '/logs') {
+        res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end(logHistory.join('\n'));
+        return;
+    }
     res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
     res.end('Bot Discord Online 24/7!');
 }).listen(PORT, () => {
